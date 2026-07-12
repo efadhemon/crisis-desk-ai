@@ -1,0 +1,33 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#cef781",
+    "activityBar.background": "#cef781",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#2dadf2",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#15202b99",
+    "sash.hoverBorder": "#cef781",
+    "statusBar.background": "#bbf451",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#a8f121",
+    "statusBarItem.remoteBackground": "#bbf451",
+    "statusBarItem.remoteForeground": "#15202b",
+    "titleBar.activeBackground": "#bbf451",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#bbf45199",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#bbf451",
+  "cSpell.words": ["COMMERZ", "dtos", "informations", "valkey", "Wagehat"],
+  "eslint.useFlatConfig": true,
+  "eslint.debug": true,
+  "eslint.options": {
+    "overrideConfigFile": "eslint.config.mjs"
+  },
+  "[typescript][json][jsonc][yaml][dockercompose][handlebars][javascript][dotenv][shellscript][dockerfile]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.insertFinalNewline": true
+}

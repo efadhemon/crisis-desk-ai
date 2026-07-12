@@ -1,0 +1,4 @@
+# PDF Templates Directory
+
+Handlebars templates for PDF generation via `HtmlHelper` / `PdfGeneratorHelper`.
+Add `<name>.template.hbs` files here when PDF features are implemented.

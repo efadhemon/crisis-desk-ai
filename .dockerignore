@@ -1,0 +1,47 @@
+# Dependencies (will be installed inside container)
+node_modules
+
+# Build output (will be built inside container)
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CI/CD
+.github
+.husky
+
+# Dev/Local files
+logs
+observability
+uploads
+ssl
+environments
+coverage
+
+# Docker files (prevent recursive context)
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+*.md
+.prettierrc
+.nvmrc
+eslint.config.mjs
+killport.sh
+gitPush.sh
+playground.js
+nginx

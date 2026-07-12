@@ -1,0 +1,23 @@
+node_modules
+dist
+
+logs/*
+!logs/.gitkeep
+
+observability/*
+
+.DS_Store
+
+ssl
+uploads
+
+# Ignore all environment files except example.env
+environments/*
+!environments/example.env
+
+# Ignore playground root files
+/playground.js
+
+# Temporarily ignore this files
+src/app/modules/job/entities/jobApplicationStageHistory.entityy.ts
+src/app/modules/job/services/jobApplicationStageHistory.service.ts

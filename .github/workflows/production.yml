@@ -1,0 +1,287 @@
+name: Prod CI/CD
+
+on:
+  push:
+    branches: [main]
+
+  workflow_dispatch:
+
+env:
+  NODE_ENV: production
+  SERVICE_NAME: wagehat-api-prod
+  DEPLOY_DIRECTORY: '~/deploy/wagehat-api-prod'
+
+  APP_DOMAIN: api.wageplatform.com
+  HEALTH_CHECK_END_POINT: /api/v1/system/health
+  NGINX_CONFIG_PATH: /etc/nginx/sites-available/api.wageplatform.com
+
+  DOCKER_USER: ${{ secrets.DOCKER_HUB_USER }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+  HOST: ${{ secrets.PRODUCTION_HOST }}
+  USER: ${{ secrets.PRODUCTION_USER }}
+  SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+  ENV_VARS: ${{ secrets.PRODUCTION_ENV_VARS }}
+
+jobs:
+  Build:
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Load Environment Variables and Generate docker-compose.yml
+        run: |
+          echo "📝 Writing env vars to ./environments/${{env.NODE_ENV}}.env"
+          mkdir -p ./environments
+          echo "${{ env.ENV_VARS }}" > ./environments/${{env.NODE_ENV}}.env
+
+          echo "🔁 Converting to KEY=\"VALUE\" format"
+          sed -E 's/^([^=]+)=(.*)$/\1="\2"/' ./environments/${{env.NODE_ENV}}.env > temp.env
+          mv temp.env ./environments/${{env.NODE_ENV}}.env
+
+          echo "🧼 Removing Windows line endings"
+          sed -i 's/\r$//' ./environments/${{env.NODE_ENV}}.env
+
+          echo "📂 List files in environments directory:"
+          ls -l ./environments
+
+          echo "🌱 Export env vars to shell"
+          set -a
+          source ./environments/${{env.NODE_ENV}}.env
+          set +a
+
+          echo "📦 Generating docker-compose.yml"
+          envsubst < docker-compose.template.yml > docker-compose.yml
+
+          echo "📄 Display docker-compose.yml:"
+          cat docker-compose.yml
+
+      - name: Ensure Docker Compose, Env File Exist
+        run: |
+          if [ ! -f environments/${{env.NODE_ENV}}.env ]; then
+            echo "File environments/${{env.NODE_ENV}}.env does not exist."
+            exit 1
+          fi
+          if [ ! -f docker-compose.yml ]; then
+            echo "File docker-compose.yml does not exist."
+            exit 1
+          fi
+
+      - name: Transfer Docker Compose and  Env Files
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          source: 'environments,docker-compose.yml'
+          target: ${{ env.DEPLOY_DIRECTORY }}
+
+      - name: Log in to Docker Hub
+        run: docker login -u ${{env.DOCKER_USER}} -p ${{env.DOCKER_PASSWORD}}
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ${{env.DOCKER_USER}}/${{env.SERVICE_NAME}}:latest
+      - name: Docker Push
+        run: docker push ${{env.DOCKER_USER}}/${{env.SERVICE_NAME}}:latest
+
+      - name: Zero Downtime Deploy to DigitalOcean
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🚀 Starting Zero Downtime Deployment"
+            echo "📍 Deploy directory: ${{ env.DEPLOY_DIRECTORY }}"
+
+            cd ${{ env.DEPLOY_DIRECTORY }}
+
+            echo "📂 List files in environments directory:"
+            ls -l ./environments
+
+            # echo "🔍 Checking ${{env.NODE_ENV}}.env..."
+            # cat environments/${{env.NODE_ENV}}.env
+
+            # Load env file to get ports
+            if [ ! -f environments/${{env.NODE_ENV}}.env ]; then
+              echo "❌ environments/${{env.NODE_ENV}}.env not found!"
+              exit 1
+            fi
+            source environments/${{env.NODE_ENV}}.env
+
+            echo "🔁 Ports Loaded from .env:"
+            echo "PORT=$PORT"
+            echo "SECONDARY_PORT=$SECONDARY_PORT"
+
+            # Configuration
+            PORT=$PORT
+            SECONDARY_PORT=$SECONDARY_PORT
+            MAX_HEALTH_CHECK_ATTEMPTS=80
+            HEALTH_CHECK_INTERVAL=5
+
+            docker login -u ${{ env.DOCKER_USER }} -p ${{ env.DOCKER_PASSWORD }}
+
+            docker pull ${{ env.DOCKER_USER }}/${{ env.SERVICE_NAME }}:latest
+
+            # Find current port from Nginx.
+            # The config may contain multiple `proxy_pass http://localhost:<port>` lines
+            # (e.g. one for `/` and one for `/socket.io/`). We just need ONE port value here;
+            # the sed step below uses the `/g` flag and rewrites every matching line.
+            ALL_PROXY_PORTS=$(grep -oP '(?<=proxy_pass http://localhost:)\d+' ${{ env.NGINX_CONFIG_PATH }} 2>/dev/null || true)
+            if [ -z "$ALL_PROXY_PORTS" ]; then
+              echo "❌ Could not detect CURRENT_PORT from Nginx config. Aborting."
+              exit 1
+            fi
+
+            CURRENT_PORT=$(echo "$ALL_PROXY_PORTS" | head -n 1)
+            DISTINCT_PORT_COUNT=$(echo "$ALL_PROXY_PORTS" | sort -u | wc -l)
+            if [ "$DISTINCT_PORT_COUNT" -gt 1 ]; then
+              echo "⚠️  Multiple distinct proxy_pass ports detected in Nginx config:"
+              echo "$ALL_PROXY_PORTS" | sort -u | sed 's/^/   - /'
+              echo "⚠️  Using CURRENT_PORT=$CURRENT_PORT (first match). All matching lines will be rewritten."
+            fi
+
+            echo "🔎 Detected CURRENT_PORT=$CURRENT_PORT from Nginx config"
+
+            # Determine new port
+            if [ "$CURRENT_PORT" = $PORT ]; then
+              NEW_PORT=$SECONDARY_PORT
+              OLD_CONTAINER=${{env.SERVICE_NAME}}-$PORT
+              NEW_CONTAINER=${{env.SERVICE_NAME}}-$SECONDARY_PORT
+              # IF ANOTHER PORTS ARE AVAILABLE THEN USE HERE
+
+            else
+              NEW_PORT=$PORT
+              OLD_CONTAINER=${{env.SERVICE_NAME}}-$SECONDARY_PORT
+              NEW_CONTAINER=${{env.SERVICE_NAME}}-$PORT
+              # IF ANOTHER PORTS ARE AVAILABLE THEN USE HERE
+            fi
+
+            echo "📦 Searching for compose file that uses current port $CURRENT_PORT"
+            BASE_COMPOSE_FILE=$(grep -rl "$CURRENT_PORT:" --include="*.yml" | head -n 1)
+
+            if [ -z "$BASE_COMPOSE_FILE" ]; then
+              echo "❌ Could not find any compose file using port $CURRENT_PORT. Aborting."
+              exit 1
+            fi
+
+            echo "✅ Found base compose file: $BASE_COMPOSE_FILE"
+
+            COMPOSE_FILE=docker-compose-${NEW_PORT}.yml
+
+            echo "🔄 Creating new compose file: $COMPOSE_FILE from $BASE_COMPOSE_FILE"
+            cp $BASE_COMPOSE_FILE $COMPOSE_FILE
+
+            echo "📝 Updating ports and container name"
+
+            # Update port mapping (find any port mapping and replace)
+            sed -i -E "s/- ['\"]?[0-9]+:${PORT}['\"]?/- '${NEW_PORT}:${PORT}'/g" "$COMPOSE_FILE"
+
+            # Update container name
+            sed -i "s/container_name: .*/container_name: $NEW_CONTAINER/g" "$COMPOSE_FILE"
+
+            # Validate YAML structure
+            echo "🔍 Validating YAML structure..."
+            if ! docker compose -f "$COMPOSE_FILE" config > /dev/null 2>&1; then
+              echo "❌ Invalid YAML structure in $COMPOSE_FILE"
+              cat "$COMPOSE_FILE"
+              exit 1
+            fi
+
+            echo "✅ Compose file validated successfully"
+            cat $COMPOSE_FILE
+            docker compose -p ${{env.SERVICE_NAME}}-${NEW_PORT} --env-file environments/${{env.NODE_ENV}}.env -f $COMPOSE_FILE up -d
+
+            echo "⏳ Waiting 10s for container to initialize..."
+            sleep 10
+
+            echo "🏥 Health checking new container at port $NEW_PORT"
+            for ((i = 1; i <= MAX_HEALTH_CHECK_ATTEMPTS; i++)); do
+              if curl -sSf --connect-timeout 5 http://localhost:$NEW_PORT${{env.HEALTH_CHECK_END_POINT}} > /dev/null; then
+                echo "✅ Health check passed"
+                break
+              elif [ $i -eq $MAX_HEALTH_CHECK_ATTEMPTS ]; then
+                echo "❌ Health check failed after $MAX_HEALTH_CHECK_ATTEMPTS attempts. Exiting..."
+                docker compose -f $COMPOSE_FILE down
+                rm -f $COMPOSE_FILE
+                exit 1
+              else
+                echo "Retrying health check... ($i/$MAX_HEALTH_CHECK_ATTEMPTS)"
+                sleep 10
+              fi
+            done
+
+            echo "🔄 Updating Nginx to route to new port $NEW_PORT"
+            sudo cp ${{ env.NGINX_CONFIG_PATH }} ${{ env.NGINX_CONFIG_PATH }}.bak
+            sudo sed -i "s/proxy_pass http:\/\/localhost:$CURRENT_PORT;/proxy_pass http:\/\/localhost:$NEW_PORT;/g" ${{ env.NGINX_CONFIG_PATH }}
+
+            echo "🔍 Testing Nginx config"
+            if ! sudo nginx -t; then
+              echo "❌ Nginx config invalid, restoring..."
+              sudo cp ${{ env.NGINX_CONFIG_PATH }}.bak ${{ env.NGINX_CONFIG_PATH }}
+              docker compose -f $COMPOSE_FILE down
+              rm -f $COMPOSE_FILE
+              exit 1
+            fi
+
+            echo "🔄 Reloading Nginx"
+            sudo systemctl reload nginx
+            sleep 5
+
+            echo "🧪 Verifying Nginx is serving new app"
+            if curl -sSf https://${{ env.APP_DOMAIN }}${{env.HEALTH_CHECK_END_POINT}} > /dev/null; then
+              echo "✅ New deployment accessible via Nginx"
+            else
+              echo "⚠️ New deployment not accessible via Nginx, but continuing..."
+            fi
+
+             # Cleanup old deployment
+            echo "🧹 Cleaning up old deployment..."
+
+            # Stop and remove old container
+            if docker ps -q -f name="$OLD_CONTAINER" | grep -q .; then
+              echo "🛑 Stopping old container: $OLD_CONTAINER"
+              docker stop "$OLD_CONTAINER" || true
+            fi
+
+            if docker ps -aq -f name="$OLD_CONTAINER" | grep -q .; then
+              echo "🗑️ Removing old container: $OLD_CONTAINER"
+              docker rm "$OLD_CONTAINER" || true
+            fi
+
+            # Clean up old compose project
+            OLD_PROJECT_NAME="${{env.SERVICE_NAME}}-${CURRENT_PORT}"
+            echo "🧹 Cleaning up old compose project: $OLD_PROJECT_NAME"
+            docker compose -p "$OLD_PROJECT_NAME" down --remove-orphans || true
+
+            # Remove old compose file if different from base
+            if [ "$BASE_COMPOSE_FILE" != "docker-compose.yml" ] && [ -f "$BASE_COMPOSE_FILE" ]; then
+              echo "🗑️ Removing old compose file: $BASE_COMPOSE_FILE"
+              rm -f "$BASE_COMPOSE_FILE"
+            fi
+
+            # Clean up backup files
+            rm -f "${{ env.NGINX_CONFIG_PATH }}.bak" 
+
+            # Docker cleanup
+            echo "🧹 Cleaning up Docker resources..."
+            docker image prune -f --filter "dangling=true"
+            docker system prune -f --filter "until=1h"
+
+            # Final status report
+            echo ""
+            echo "🎉 ============================================="
+            echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY"
+            echo "============================================="
+            echo "📦 Container: $NEW_CONTAINER"
+            echo "🌐 Port: $NEW_PORT"
+            echo "============================================="
+
+            # Show running containers for verification
+            echo "📋 Current running containers:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep ${{env.SERVICE_NAME}} || true

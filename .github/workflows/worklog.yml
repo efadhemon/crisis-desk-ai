@@ -1,0 +1,93 @@
+name: Create ClickUp Work logs with Assignee
+on: [push]
+
+env:
+  CLICKUP_LIST_ID: 901814415879
+  CLICKUP_API_TOKEN: ${{ secrets.CLICKUP_API_TOKEN }}
+
+jobs:
+  process_commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Process Commits and Create Tasks
+        id: create_tasks
+        run: |
+          # --- 1. DEFINE USER MAPPING ---
+          declare -A USERS
+          USERS=( 
+            ["efadhemon"]="54526353" 
+            ["farzanhossan"]="3386292"
+            ["minhazurakash"]="54526352" 
+            ["Galib6"]="67321200"
+            ["khalidccnu"]="89447947"
+          )
+          DEFAULT_USER_ID="3386292"
+
+          # --- 2. PREPARE TIME DATA ---
+          NOW_MS=$(($(date +%s) * 1000))
+          HUMAN_DATE=$(date +'%Y-%m-%d %H:%M:%S')
+
+          # --- 3. LOOP THROUGH COMMITS ---
+          echo '${{ toJSON(github.event.commits) }}' | jq -c '.[]' | while read -r commit; do
+            
+            # Extract basic info
+            AUTHOR_USER=$(echo "$commit" | jq -r '.author.username // .committer.username')
+            COMMIT_SHA=$(echo "$commit" | jq -r '.id')
+            FULL_MSG=$(echo "$commit" | jq -r '.message')
+            
+            # Split Title vs Body
+            TASK_NAME=$(echo "$FULL_MSG" | head -n1)
+            TASK_BODY=$(echo "$FULL_MSG" | tail -n +2)
+
+            # Find Assignee
+            CLICKUP_ID=${USERS[$AUTHOR_USER]}
+            if [ -z "$CLICKUP_ID" ]; then
+              CLICKUP_ID="$DEFAULT_USER_ID"
+            fi
+
+            # --- 4. CREATE JSON PAYLOAD (FIXED FORMATTING) ---
+            # We pass the raw variables to jq and let jq build the string.
+            # This prevents the "\n" text issue.
+            
+            JSON_PAYLOAD=$(jq -n \
+              --arg name "$TASK_NAME" \
+              --arg body "$TASK_BODY" \
+              --arg author "$AUTHOR_USER" \
+              --arg repo "${{ github.repository }}" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit "$COMMIT_SHA" \
+              --arg time "$HUMAN_DATE" \
+              --arg assignee "$CLICKUP_ID" \
+              --argjson due "$NOW_MS" \
+              '{
+                name: $name,
+                description: (
+                  (if $body == "" then "" else $body + "\n\n---\n" end) +
+                  "**Developer:** " + $author + "\n" +
+                  "**Repo:** " + $repo + "\n" +
+                  "**Branch:** " + $branch + "\n" +
+                  "**Commit:** " + $commit + "\n" +
+                  "**Time:** " + $time + "\n\n" +
+                  "This task was automatically generated from a GitHub push event."
+                ),
+                status: "complete",
+                assignees: [$assignee | tonumber],
+                due_date: $due
+              }')
+
+            # --- 5. SEND TO CLICKUP ---
+            echo "Creating task for commit: $COMMIT_SHA"
+            
+            curl --request POST \
+              --url "https://api.clickup.com/api/v2/list/${{ env.CLICKUP_LIST_ID }}/task" \
+              --header "Authorization: ${{ env.CLICKUP_API_TOKEN }}" \
+              --header "Content-Type: application/json" \
+              --silent \
+              --data "$JSON_PAYLOAD"
+              
+          done

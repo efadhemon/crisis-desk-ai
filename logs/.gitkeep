@@ -1,0 +1,5 @@
+# This folder stores application logs generated at runtime.
+# Logs are created by the application for debugging, monitoring, and tracking events.
+#
+# .gitkeep is a placeholder file that ensures this empty directory is tracked by Git,
+# even when it contains no other files.

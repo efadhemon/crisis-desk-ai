@@ -1,0 +1,5 @@
+# Commands Directory
+
+This directory contains command files for the event module.
+Commands represent actions or operations that modify the state of the system.
+Each command file should define a specific command handler for event-related operations.
