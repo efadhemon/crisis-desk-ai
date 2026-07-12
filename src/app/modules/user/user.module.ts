@@ -1,23 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HelpersModule } from '@src/app/helpers/helpers.module';
-import { AclModule } from '../acl/acl.module';
 import { GlobalConfigModule } from '../globalConfig/globalConfig.module';
 import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
-import { UserRole } from './entities/userRole.entity';
 import { UserService } from './services/user.service';
-import { UserRoleService } from './services/userRole.service';
 import { UserSubscriber } from './subscribers/user.subscriber';
 
-const entities = [User, UserRole];
+const entities = [User];
 
-const services = [UserService, UserRoleService];
+const services = [UserService];
 const subscribers = [UserSubscriber];
 
 const controllers = [UserController];
 
-const modules = [HelpersModule, AclModule, GlobalConfigModule];
+const modules = [HelpersModule, GlobalConfigModule];
 
 @Module({
   imports: [TypeOrmModule.forFeature(entities), ...modules],

@@ -21,16 +21,13 @@ import authenticator from 'otplib';
 import { toDataURL } from 'qrcode';
 import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
-import { RoleService } from '../../acl/services/role.service';
 import { GlobalConfigService } from '../../globalConfig/services/globalConfig.service';
 
 import { ENUM_NOTIFICATION_TYPE } from '../../notification/enums';
 import { EmailNotificationService } from '../../notification/services/emailNotification.service';
 import { SmsNotificationService } from '../../notification/services/smsNotification.service';
 import { User } from '../../user/entities/user.entity';
-import { UserRole } from '../../user/entities/userRole.entity';
 import { ENUM_AUTH_PROVIDERS, ENUM_USER_TYPES } from '../../user/enums';
-import { UserRoleService } from '../../user/services/userRole.service';
 import { Authenticate2faDTO } from '../dtos/authenticate2fa.dto';
 import { FacebookAuthRequestDTO } from '../dtos/facebookAuthRequest.dto';
 import { GoogleAuthRequestDTO } from '../dtos/googleAuthRequest.dto';
@@ -52,8 +49,6 @@ export class AuthService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
-    private readonly roleService: RoleService,
-    private readonly userRoleService: UserRoleService,
     private readonly http: HttpService,
     private readonly jwtHelper: JWTHelper,
     private readonly bcryptHelper: BcryptHelper,
@@ -312,16 +307,7 @@ export class AuthService {
       };
 
       // Create User
-      const createdUser = await queryRunner.manager.save(User, payloadForNewUser);
-
-      const targetRole = await this.roleService.getTargetRoleByUserType(payload.userType);
-      if (targetRole) {
-        // Assign Role to User
-        await queryRunner.manager.save(UserRole, {
-          userId: createdUser.id,
-          roleId: targetRole.id,
-        });
-      }
+      await queryRunner.manager.save(User, payloadForNewUser);
 
       await commitTransaction(queryRunner);
 
@@ -420,19 +406,12 @@ export class AuthService {
     });
   }
 
-  async getUserRolePermissions(userId: string): Promise<any> {
-    const { data: userRoles } = await this.userRoleService.findAllBase(
-      { userId: userId },
-      {
-        relations: { role: true },
-      },
-    );
-
-    const roles = userRoles.map((uR) => uR.role.title);
-    const permissions = await this.userRoleService.getUserPermissions(userId);
+  async getUserRolePermissions(
+    _userId: string,
+  ): Promise<{ roles: string[]; permissions: string[] }> {
     return {
-      roles,
-      permissions,
+      roles: [],
+      permissions: [],
     };
   }
 
@@ -500,25 +479,6 @@ export class AuthService {
 
     if (!newCreatedUser) {
       throw new BadRequestException('User not created');
-    }
-
-    //? Role assignment
-    if (additionalData?.role) {
-      const role = await this.roleService.findOrCreateRole(additionalData.role);
-      if (role) {
-        const isUserRoleExist = await this.userRoleService.findOne({
-          where: {
-            userId: newCreatedUser.id,
-            roleId: role.id,
-          },
-        });
-        if (!isUserRoleExist) {
-          await this.userRoleService.createOneBase({
-            userId: newCreatedUser.id,
-            roleId: role.id,
-          });
-        }
-      }
     }
 
     const callBackUrl = `${additionalData.webRedirectUrl}?token=${userData?.accessToken}&provider=${additionalData.provider}`;
@@ -595,25 +555,6 @@ export class AuthService {
 
     if (!newCreatedUser) {
       throw new BadRequestException('User not created');
-    }
-
-    //? Role assignment
-    if (additionalData?.role) {
-      const role = await this.roleService.findOrCreateRole(additionalData.role);
-      if (role) {
-        const isUserRoleExist = await this.userRoleService.findOne({
-          where: {
-            userId: newCreatedUser.id,
-            roleId: role.id,
-          },
-        });
-        if (!isUserRoleExist) {
-          await this.userRoleService.createOneBase({
-            userId: newCreatedUser.id,
-            roleId: role.id,
-          });
-        }
-      }
     }
 
     const callBackUrl = `${additionalData.webRedirectUrl}?token=${userData?.accessToken}&provider=${additionalData.provider}`;
@@ -693,15 +634,6 @@ export class AuthService {
         // Create User
         const createdUser = await queryRunner.manager.save(User, payloadForNewUser);
 
-        const targetRole = await this.roleService.getTargetRoleByUserType(payload.userType);
-        if (targetRole) {
-          // Assign Role to User
-          await queryRunner.manager.save(UserRole, {
-            userId: createdUser.id,
-            roleId: targetRole.id,
-          });
-        }
-
         await commitTransaction(queryRunner);
 
         user = createdUser; // Update user to the newly created one
@@ -776,15 +708,6 @@ export class AuthService {
         };
 
         const createdUser = await queryRunner.manager.save(User, payloadForNewUser);
-
-        const targetRole = await this.roleService.getTargetRoleByUserType(payload.userType);
-        if (targetRole) {
-          // Assign Role to User
-          await queryRunner.manager.save(UserRole, {
-            userId: createdUser.id,
-            roleId: targetRole.id,
-          });
-        }
 
         await commitTransaction(queryRunner);
 

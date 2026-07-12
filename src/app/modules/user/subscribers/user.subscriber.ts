@@ -52,19 +52,4 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
         .trim();
     }
   }
-
-  async afterLoad(entity: any): Promise<void> {
-    if (entity?.userRoles && entity?.userRoles?.length) {
-      entity.roles = entity.userRoles
-        .map((userRole) => userRole.role)
-        .map((role) => {
-          return {
-            ...role,
-            isAlreadyAdded: true,
-          };
-        });
-
-      delete entity.userRoles;
-    }
-  }
 }

@@ -1,13 +1,8 @@
-import { ApiKey } from '@src/app/modules/acl/entities/apiKey.entity';
-import { Role } from '@src/app/modules/acl/entities/role.entity';
 import { GlobalConfig } from '@src/app/modules/globalConfig/entities/globalConfig.entity';
 import { User } from '@src/app/modules/user/entities/user.entity';
-import { UserRole } from '@src/app/modules/user/entities/userRole.entity';
 import { ENV } from '@src/env';
 import { DataSource } from 'typeorm';
-import ApiKeySeeder from './seeder/apiKey.seeder';
 import GlobalConfigSeeder from './seeder/globalConfig.seeder';
-import RoleSeeder from './seeder/role.seeder';
 import UserSeeder from './seeder/user.seeder';
 
 const dataSource = new DataSource({
@@ -25,7 +20,7 @@ const dataSource = new DataSource({
         rejectUnauthorized: ENV.db.rejectUnauthorized,
       }
     : false,
-  entities: [User, Role, UserRole, GlobalConfig, ApiKey],
+  entities: [User, GlobalConfig],
 });
 
 (async () => {
@@ -33,14 +28,10 @@ const dataSource = new DataSource({
   await dataSource.synchronize();
 
   const globalConfigSeeder = new GlobalConfigSeeder(dataSource);
-  const apiKeySeeder = new ApiKeySeeder(dataSource);
-  const roleSeeder = new RoleSeeder(dataSource);
   const userSeeder = new UserSeeder(dataSource);
 
-  await roleSeeder.run();
   await userSeeder.run();
   await globalConfigSeeder.run();
-  await apiKeySeeder.run();
 
   await dataSource.destroy();
 })();

@@ -1,8 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GalleryModule } from '../gallery/gallery.module';
-import { AclModule } from './../acl/acl.module';
 import { UserModule } from './../user/user.module';
 import { AuthController } from './controllers/auth.controller';
 import { FacebookOAuthGuard } from './guards/facebook.guard';
@@ -21,7 +19,7 @@ const subscribers = [];
 
 const controllers = [AuthController];
 
-const modules = [UserModule, AclModule, HttpModule, GalleryModule];
+const modules = [UserModule, HttpModule];
 const strategies = [LocalStrategy, JwtStrategy, GoogleStrategy, FacebookStrategy];
 
 const guards = [RolesGuard, PermissionsGuard, GoogleOAuthGuard, FacebookOAuthGuard];

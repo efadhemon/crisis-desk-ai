@@ -14,10 +14,8 @@ import { RequestLoggerMiddleware } from './middlewares/requestLogger.middleware'
 import { CacheModule } from './modules/@cache/cache.module';
 import { EventModule } from './modules/@event/event.module';
 import { QueueModule } from './modules/@queue/queue.module';
-import { AclModule } from './modules/acl/acl.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/guards/local-auth.guard';
-import { GalleryModule } from './modules/gallery/gallery.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ReportModule } from './modules/report/report.module';
 import { SystemModule } from './modules/system/system.module';
@@ -43,9 +41,7 @@ const MODULES = [
   SystemModule,
   HelpersModule,
   AuthModule,
-  GalleryModule,
   NotificationModule,
-  AclModule,
   UserModule,
   CacheModule,
   EventModule,

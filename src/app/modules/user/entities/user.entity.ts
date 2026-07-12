@@ -1,10 +1,8 @@
 import { BaseEntity } from '@src/app/base';
 import { AutoEntity, AutoIndex } from '@src/database/decorators';
 import { ENUM_COLUMN_TYPES } from '@src/shared';
-import { Type } from 'class-transformer';
-import { Column, OneToMany } from 'typeorm';
+import { Column } from 'typeorm';
 import { ENUM_AUTH_PROVIDERS, ENUM_USER_TYPES } from '../enums';
-import { UserRole } from './userRole.entity';
 
 @AutoEntity({ orderBy: { createdAt: 'DESC' } })
 export class User extends BaseEntity {
@@ -61,8 +59,4 @@ export class User extends BaseEntity {
 
   @Column({ type: ENUM_COLUMN_TYPES.BOOLEAN, nullable: true, default: false })
   isVerified?: boolean;
-
-  @OneToMany(() => UserRole, (e) => e.user)
-  @Type(() => UserRole)
-  userRoles?: UserRole[];
 }

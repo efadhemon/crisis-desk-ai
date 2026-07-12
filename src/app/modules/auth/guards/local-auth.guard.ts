@@ -11,8 +11,6 @@ import { SKIP_KEY_CHECK } from '@src/app/decorators/skipKeyCheck.decorator';
 import { JWTHelper } from '@src/app/helpers';
 import { ENV } from '@src/env';
 import { Request } from 'express';
-import { DataSource } from 'typeorm';
-import { ApiKey } from '../../acl/entities/apiKey.entity';
 import { ENUM_USER_TYPES } from '../../user/enums';
 
 @Injectable()
@@ -20,7 +18,6 @@ export class AuthGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private jwtHelper: JWTHelper,
-    private readonly dataSource: DataSource,
   ) {}
 
   private readonly logger = new Logger(AuthGuard.name);
@@ -112,16 +109,5 @@ export class AuthGuard implements CanActivate {
     if (!xApiKey) {
       throw new UnauthorizedException('API Key is missing');
     }
-
-    const apiKey = await this.dataSource.manager.findOne(ApiKey, {
-      where: { key: xApiKey, isActive: true },
-    });
-
-    if (!apiKey) {
-      throw new UnauthorizedException('Invalid API Key');
-    }
-
-    request['apiKey'] = apiKey;
-    // end of X-Api-Key validation
   }
 }

@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from '@src/app/base/base.service';
-import { asyncForEach } from '@src/shared';
 import {
   commitTransaction,
   rollbackTransaction,
@@ -9,13 +8,9 @@ import {
 } from '@src/shared/utils/dborm.utils';
 import { isNotEmptyObject } from 'class-validator';
 import { DataSource, FindOptionsRelations, Repository } from 'typeorm';
-import { FilterRoleDTO } from '../../acl/dtos';
-import { RoleService } from '../../acl/services/role.service';
 import { UserCreateDTO } from '../dtos/user/create.dto';
-import { UserRolesUpdateDTO, UserUpdateDTO } from '../dtos/user/update.dto';
+import { UserUpdateDTO } from '../dtos/user/update.dto';
 import { User } from '../entities/user.entity';
-import { UserRole } from './../entities/userRole.entity';
-import { UserRoleService } from './userRole.service';
 
 @Injectable()
 export class UserService extends BaseService<User> {
@@ -23,31 +18,8 @@ export class UserService extends BaseService<User> {
     @InjectRepository(User)
     public readonly repo: Repository<User>,
     private readonly dataSource: DataSource,
-    private readonly roleService: RoleService,
-    private readonly userRoleService: UserRoleService,
   ) {
     super(repo);
-  }
-
-  async availableRoles(id: string | string, payload: FilterRoleDTO): Promise<any> {
-    const isExist = await this.isExist({ id: id });
-
-    const { data: roles } = await this.roleService.findAllBase(payload);
-
-    const userRoles = await this.userRoleService.find({
-      where: {
-        userId: isExist.id,
-      },
-    });
-
-    if (roles && roles.length > 0) {
-      roles.forEach((role) => {
-        const isAlreadyAdded = userRoles.find((userRole) => userRole.roleId === role.id);
-        role.isAlreadyAdded = !!isAlreadyAdded;
-      });
-    }
-
-    return roles;
   }
 
   async createUser(payload: UserCreateDTO, relations?: FindOptionsRelations<User>): Promise<User> {
@@ -66,14 +38,6 @@ export class UserService extends BaseService<User> {
         userType: userType,
         isVerified: true,
       } satisfies User);
-
-      const targetRole = await this.roleService.getTargetRoleByUserType(userType);
-      if (targetRole) {
-        await queryRunner.manager.save(UserRole, {
-          userId: createdUser.id,
-          roleId: targetRole.id,
-        } satisfies UserRole);
-      }
 
       await commitTransaction(queryRunner);
     } catch (error) {
@@ -98,52 +62,13 @@ export class UserService extends BaseService<User> {
   ): Promise<User> {
     await this.isExist({ id: id as any });
 
-    const { roles, ...userData } = payload;
+    const { roles: _roles, ...userData } = payload;
 
     const queryRunner = await startTransaction(this.dataSource);
 
     try {
       if (isNotEmptyObject(userData)) {
         await queryRunner.manager.update(User, { id }, userData);
-      }
-
-      if (roles && roles.length > 0) {
-        const deletedItems = roles.filter((role) => role.isDeleted);
-        const newOrUpdatedItems = roles.filter((role) => !role.isDeleted);
-
-        await asyncForEach(deletedItems, async (role: UserRolesUpdateDTO) => {
-          await this.userRoleService.isExist({
-            userId: id,
-            roleId: role.role,
-          });
-          await queryRunner.manager.delete(UserRole, {
-            userId: id,
-            roleId: role.role,
-          });
-        });
-
-        await asyncForEach(newOrUpdatedItems, async (role: UserRolesUpdateDTO) => {
-          const isRoleExist = await this.roleService.isExist({
-            id: role.role,
-          });
-          const isUserRoleExist = await this.userRoleService.findOne({
-            where: {
-              userId: id,
-              roleId: role.role,
-            },
-          });
-
-          if (isUserRoleExist)
-            throw new ConflictException(`User already has the ${isRoleExist?.title} role!`);
-          else {
-            await queryRunner.manager.save(
-              Object.assign(new UserRole(), {
-                userId: id,
-                roleId: role.role,
-              }),
-            );
-          }
-        });
       }
 
       await commitTransaction(queryRunner);

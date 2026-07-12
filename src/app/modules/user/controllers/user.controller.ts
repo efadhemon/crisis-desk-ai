@@ -2,8 +2,6 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@src/app/decorators';
 import { IAuthUser } from '@src/app/interfaces';
-import { FilterRoleDTO } from '@src/app/modules/acl/dtos';
-import { Role } from '@src/app/modules/acl/entities/role.entity';
 import { SuccessResponse } from '@src/app/types';
 import { FindOptionsRelations, In } from 'typeorm';
 import { UserCreateDTO } from '../dtos/user/create.dto';
@@ -20,44 +18,21 @@ import { UserService } from '../services/user.service';
 export class UserController {
   constructor(private readonly service: UserService) {}
 
-  RELATIONS: FindOptionsRelations<User> = {
-    userRoles: {
-      role: true,
-    },
-  };
+  RELATIONS: FindOptionsRelations<User> = {};
 
   @Get()
   async findAll(@Query() query: UserFilterDTO): Promise<SuccessResponse<User[]>> {
-    if (query.roles && query.roles.length > 0) {
-      query['userRoles'] = {
-        role: {
-          title: In(query.roles) as any,
-        },
-      };
-      delete query.roles;
-    }
     return this.service.findAllBase(query, { relations: this.RELATIONS });
   }
 
   @Get('me')
   async me(@AuthUser() authUser: IAuthUser): Promise<User> {
-    return this.service.findByIdBase(authUser.id, {
-      relations: {
-        userRoles: {
-          role: true,
-        },
-      },
-    });
+    return this.service.findByIdBase(authUser.id);
   }
 
   @Post('bulk-by-ids')
   async findBulkByIds(@Body() payload: UserFilterBulkByIdsDTO): Promise<SuccessResponse<User[]>> {
     return this.service.findAllBase({ id: In(payload.ids) as any }, { relations: this.RELATIONS });
-  }
-
-  @Get(':id/available-roles')
-  async availableRoles(@Param('id') id: string, @Query() query: FilterRoleDTO): Promise<Role[]> {
-    return this.service.availableRoles(id, query);
   }
 
   @Get(':id')
