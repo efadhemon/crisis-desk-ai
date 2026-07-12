@@ -97,7 +97,7 @@ export const ENV = {
 
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-flash-latest',
     embedModel: process.env.GEMINI_EMBED_MODEL || 'gemini-embedding-001',
     embedDim: toNumber(process.env.GEMINI_EMBED_DIM) || 768,
     baseUrl:

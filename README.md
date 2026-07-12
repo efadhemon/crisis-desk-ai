@@ -125,7 +125,7 @@ Key CrisisDesk settings:
 | -------------------------------- | ---------------------- | ------------------------------------------------ |
 | `API_PREFIX`                     | `api`                  | Global route prefix, giving `/api/reports`       |
 | `GEMINI_API_KEY`                 | —                      | Gemini API key (required for real AI output)     |
-| `GEMINI_MODEL`                   | `gemini-2.0-flash`     | Classification/summarization model               |
+| `GEMINI_MODEL`                   | `gemini-flash-latest`  | Classification/summarization model               |
 | `GEMINI_EMBED_MODEL`             | `gemini-embedding-001` | Embedding model (768 dims)                       |
 | `GEMINI_EMBED_DIM`               | `768`                  | Embedding dimensionality (matches `vector(768)`) |
 | `DUPLICATE_SIMILARITY_THRESHOLD` | `0.85`                 | Cosine similarity to flag a duplicate            |

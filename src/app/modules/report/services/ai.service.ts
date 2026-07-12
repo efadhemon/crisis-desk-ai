@@ -39,9 +39,12 @@ export class AiService {
             temperature: 0.2,
             responseMimeType: 'application/json',
             responseSchema: this.responseSchema(),
+            // Disable "thinking" on 2.5/3.x flash models — this triage task does
+            // not need it, and it keeps latency low. Ignored by models without it.
+            thinkingConfig: { thinkingBudget: 0 },
           },
         },
-        { timeout: 20000, headers: { 'Content-Type': 'application/json' } },
+        { timeout: 45000, headers: { 'Content-Type': 'application/json' } },
       );
 
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
