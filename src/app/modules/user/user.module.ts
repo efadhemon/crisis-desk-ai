@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HelpersModule } from '@src/app/helpers/helpers.module';
 import { AclModule } from '../acl/acl.module';
 import { GlobalConfigModule } from '../globalConfig/globalConfig.module';
-import { UserInternalController } from './controllers/internal/user.internal.controller';
+import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/userRole.entity';
 import { UserService } from './services/user.service';
@@ -15,7 +15,7 @@ const entities = [User, UserRole];
 const services = [UserService, UserRoleService];
 const subscribers = [UserSubscriber];
 
-const internalControllers = [UserInternalController];
+const controllers = [UserController];
 
 const modules = [HelpersModule, AclModule, GlobalConfigModule];
 
@@ -23,6 +23,6 @@ const modules = [HelpersModule, AclModule, GlobalConfigModule];
   imports: [TypeOrmModule.forFeature(entities), ...modules],
   providers: [...services, ...subscribers],
   exports: [...services, ...subscribers],
-  controllers: [...internalControllers],
+  controllers: [...controllers],
 })
 export class UserModule {}

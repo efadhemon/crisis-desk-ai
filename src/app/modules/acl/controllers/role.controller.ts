@@ -9,10 +9,8 @@ import {
   Patch,
   Post,
   Query,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { SuccessResponse } from '@src/app/types';
 import { ENUM_ACL_DEFAULT_ROLES } from '@src/shared';
 import { FindOptionsRelations, Not } from 'typeorm';
@@ -22,19 +20,18 @@ import {
   FilterRoleDTO,
   RemovePermissionsDTO,
   UpdateRoleDTO,
-} from '../../dtos';
-import { AddPermissionsDTO } from '../../dtos/role/addPermissions.dto';
-import { Permission } from '../../entities/permission.entity';
-import { Role } from '../../entities/role.entity';
-import { RoleService } from '../../services/role.service';
+} from '../dtos';
+import { AddPermissionsDTO } from '../dtos/role/addPermissions.dto';
+import { Permission } from '../entities/permission.entity';
+import { Role } from '../entities/role.entity';
+import { RoleService } from '../services/role.service';
 
 @ApiTags('RBAC#Role')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${Role.apiRouteName}`)
-export class RoleInternalController {
+@Controller(Role.apiRouteName)
+export class RoleController {
   constructor(private readonly service: RoleService) {}
   RELATIONS: FindOptionsRelations<Role> = {};
 

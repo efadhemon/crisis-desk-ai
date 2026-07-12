@@ -2,8 +2,8 @@ import { HttpModule } from '@nestjs/axios';
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../user/user.module';
-import { EmailGatewayInternalController } from './controllers/internal/emailGateway.internal.controller';
-import { SmsGatewayInternalController } from './controllers/internal/smsGateway.internal.controller';
+import { EmailGatewayController } from './controllers/emailGateway.controller';
+import { SmsGatewayController } from './controllers/smsGateway.controller';
 import { EmailGateway } from './entities/emailGateway.entity';
 import { EmailNotification } from './entities/emailNotification.entity';
 import { SmsGateway } from './entities/smsGateway.entity';
@@ -24,7 +24,7 @@ const services = [
 
 const subscribers = [NotificationDbListenerService];
 
-const internalControllers = [EmailGatewayInternalController, SmsGatewayInternalController];
+const controllers = [EmailGatewayController, SmsGatewayController];
 
 const modules = [HttpModule, UserModule];
 
@@ -33,6 +33,6 @@ const modules = [HttpModule, UserModule];
   imports: [TypeOrmModule.forFeature(entities), ...modules],
   providers: [...services, ...subscribers],
   exports: [...services, ...subscribers],
-  controllers: [...internalControllers],
+  controllers: [...controllers],
 })
 export class NotificationModule {}

@@ -1,32 +1,20 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { UuidValidationPipe } from '@src/app/pipes/uuidValidation.pipe';
 import { SuccessResponse } from '@src/app/types';
 import { FindOptionsRelations } from 'typeorm';
-import { SmsGatewayCreateDTO } from '../../dtos/smsGateway/create.dto';
-import { SmsGatewayFilterDTO } from '../../dtos/smsGateway/filter.dto';
-import { SmsGatewayUpdateDTO } from '../../dtos/smsGateway/update.dto';
-import { SmsGateway } from '../../entities/smsGateway.entity';
-import { SmsGatewayService } from '../../services/smsGateway.service';
+import { SmsGatewayCreateDTO } from '../dtos/smsGateway/create.dto';
+import { SmsGatewayFilterDTO } from '../dtos/smsGateway/filter.dto';
+import { SmsGatewayUpdateDTO } from '../dtos/smsGateway/update.dto';
+import { SmsGateway } from '../entities/smsGateway.entity';
+import { SmsGatewayService } from '../services/smsGateway.service';
 
 @ApiTags('Sms Gateway')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${SmsGateway.apiRouteName}`)
-export class SmsGatewayInternalController {
+@Controller(SmsGateway.apiRouteName)
+export class SmsGatewayController {
   constructor(private readonly service: SmsGatewayService) {}
 
   RELATIONS: FindOptionsRelations<SmsGateway> = {};

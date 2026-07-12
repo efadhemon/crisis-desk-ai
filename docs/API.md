@@ -230,7 +230,7 @@ Response `200`:
 
 ---
 
-## POST /api/auth/login
+## POST /api/admin/login
 
 Admin login. Returns a JWT used for admin-gated endpoints.
 

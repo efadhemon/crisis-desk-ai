@@ -15,23 +15,21 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { BaseBulkDeleteDTO } from '@src/app/base/baseBulkDelete.dto';
 import { AuthUser } from '@src/app/decorators';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { IAuthUser } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
 import { storageFileOptions } from '@src/shared';
 import { FindOptionsRelations } from 'typeorm';
-import { FilterGalleryDTO } from '../../dtos/filter.dto';
-import { UpdateGalleryDTO } from '../../dtos/update.dto';
-import { Gallery } from '../../entities/gallery.entity';
-import { GalleryService } from '../../services/gallery.service';
+import { FilterGalleryDTO } from '../dtos/filter.dto';
+import { UpdateGalleryDTO } from '../dtos/update.dto';
+import { Gallery } from '../entities/gallery.entity';
+import { GalleryService } from '../services/gallery.service';
 
 @ApiTags('Gallery')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${Gallery.apiRouteName}`)
-export class GalleryInternalController {
+@Controller(Gallery.apiRouteName)
+export class GalleryController {
   constructor(private readonly service: GalleryService) {}
   RELATIONS: FindOptionsRelations<Gallery> = {};
 

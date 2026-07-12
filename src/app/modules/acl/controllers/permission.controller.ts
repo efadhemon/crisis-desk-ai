@@ -1,31 +1,18 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { SuccessResponse } from '@src/app/types';
 import { FindOptionsRelations } from 'typeorm';
-import { CreatePermissionDTO, FilterPermissionDTO, UpdatePermissionDTO } from '../../dtos';
-import { Permission } from '../../entities/permission.entity';
-import { PermissionService } from '../../services/permission.service';
+import { CreatePermissionDTO, FilterPermissionDTO, UpdatePermissionDTO } from '../dtos';
+import { Permission } from '../entities/permission.entity';
+import { PermissionService } from '../services/permission.service';
 
 @ApiTags('RBAC#Permission')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${Permission.apiRouteName}`)
-export class PermissionInternalController {
+@Controller(Permission.apiRouteName)
+export class PermissionController {
   constructor(private readonly service: PermissionService) {}
-  // RELATIONS = ['permissionType'];
   RELATIONS: FindOptionsRelations<Permission> = { permissionType: true };
 
   @Get()

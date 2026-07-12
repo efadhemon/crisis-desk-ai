@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApiKeyInternalController } from './controllers/internal/apiKey.internal.controller';
-import { PermissionInternalController } from './controllers/internal/permission.internal.controller';
-import { PermissionTypeInternalController } from './controllers/internal/permissionType.internal.controller';
-import { RoleInternalController } from './controllers/internal/role.internal.controller';
+import { ApiKeyController } from './controllers/apiKey.controller';
+import { PermissionController } from './controllers/permission.controller';
+import { PermissionTypeController } from './controllers/permissionType.controller';
+import { RoleController } from './controllers/role.controller';
 import { ApiKey } from './entities/apiKey.entity';
 import { Permission } from './entities/permission.entity';
 import { PermissionType } from './entities/permissionType.entity';
@@ -24,18 +24,17 @@ const services = [
   ApiKeyService,
 ];
 const subscribers = [];
-const controllers = [];
-const internalControllers = [
-  RoleInternalController,
-  PermissionInternalController,
-  PermissionTypeInternalController,
-  ApiKeyInternalController,
+const controllers = [
+  RoleController,
+  PermissionController,
+  PermissionTypeController,
+  ApiKeyController,
 ];
 
 @Module({
   imports: [TypeOrmModule.forFeature(entities)],
   providers: [...services, ...subscribers],
   exports: [...services, ...subscribers],
-  controllers: [...controllers, ...internalControllers],
+  controllers: [...controllers],
 })
 export class AclModule {}

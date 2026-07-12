@@ -4,8 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GalleryModule } from '../gallery/gallery.module';
 import { AclModule } from './../acl/acl.module';
 import { UserModule } from './../user/user.module';
-import { AuthAppController } from './controllers/app/auth.app.controller';
-import { AuthInternalController } from './controllers/internal/auth.internal.controller';
+import { AuthController } from './controllers/auth.controller';
 import { FacebookOAuthGuard } from './guards/facebook.guard';
 import { GoogleOAuthGuard } from './guards/google.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
@@ -19,8 +18,8 @@ import { LocalStrategy } from './strategies/local.strategy';
 const entities = [];
 const services = [AuthService];
 const subscribers = [];
-const appControllers = [AuthAppController];
-const internalControllers = [AuthInternalController];
+
+const controllers = [AuthController];
 
 const modules = [UserModule, AclModule, HttpModule, GalleryModule];
 const strategies = [LocalStrategy, JwtStrategy, GoogleStrategy, FacebookStrategy];
@@ -31,6 +30,6 @@ const guards = [RolesGuard, PermissionsGuard, GoogleOAuthGuard, FacebookOAuthGua
   imports: [TypeOrmModule.forFeature(entities), ...modules],
   providers: [...services, ...subscribers, ...strategies, ...guards],
   exports: [...services, ...subscribers],
-  controllers: [...internalControllers, ...appControllers],
+  controllers: [...controllers],
 })
 export class AuthModule {}

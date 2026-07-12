@@ -1,29 +1,17 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { SuccessResponse } from '@src/app/types';
 import { FindOptionsRelations } from 'typeorm';
-import { CreateApiKeyDTO, FilterApiKeyDTO, UpdateApiKeyDTO } from '../../dtos';
-import { ApiKey } from '../../entities/apiKey.entity';
-import { ApiKeyService } from '../../services/apiKey.service';
+import { CreateApiKeyDTO, FilterApiKeyDTO, UpdateApiKeyDTO } from '../dtos';
+import { ApiKey } from '../entities/apiKey.entity';
+import { ApiKeyService } from '../services/apiKey.service';
 
 @ApiTags('API KEY')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${ApiKey.apiRouteName}`)
-export class ApiKeyInternalController {
+@Controller(ApiKey.apiRouteName)
+export class ApiKeyController {
   constructor(private readonly service: ApiKeyService) {}
   RELATIONS: FindOptionsRelations<ApiKey> = {};
 

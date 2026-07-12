@@ -1,32 +1,20 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalRequestInterceptor } from '@src/app/interceptors';
 import { UuidValidationPipe } from '@src/app/pipes/uuidValidation.pipe';
 import { SuccessResponse } from '@src/app/types';
 import { FindOptionsRelations } from 'typeorm';
-import { EmailGatewayCreateDTO } from '../../dtos/emailGateway/create.dto';
-import { EmailGatewayFilterDTO } from '../../dtos/emailGateway/filter.dto';
-import { EmailGatewayUpdateDTO } from '../../dtos/emailGateway/update.dto';
-import { EmailGateway } from '../../entities/emailGateway.entity';
-import { EmailGatewayService } from '../../services/emailGateway.service';
+import { EmailGatewayCreateDTO } from '../dtos/emailGateway/create.dto';
+import { EmailGatewayFilterDTO } from '../dtos/emailGateway/filter.dto';
+import { EmailGatewayUpdateDTO } from '../dtos/emailGateway/update.dto';
+import { EmailGateway } from '../entities/emailGateway.entity';
+import { EmailGatewayService } from '../services/emailGateway.service';
 
 @ApiTags('Email Gateway')
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@UseInterceptors(InternalRequestInterceptor)
-@Controller(`internal/${EmailGateway.apiRouteName}`)
-export class EmailGatewayInternalController {
+@Controller(EmailGateway.apiRouteName)
+export class EmailGatewayController {
   constructor(private readonly service: EmailGatewayService) {}
 
   RELATIONS: FindOptionsRelations<EmailGateway> = {};

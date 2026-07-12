@@ -8,8 +8,8 @@ import { storageFileOptions } from '@src/shared';
 @ApiBearerAuth()
 @ApiSecurity('X-Panel-Key')
 @ApiSecurity('X-Api-Key')
-@Controller('internal/files')
-export class FileStorageInternalController {
+@Controller('files')
+export class FileUploadController {
   constructor(private readonly fileUploadHelper: FileUploadHelper) {}
 
   @ApiBody({

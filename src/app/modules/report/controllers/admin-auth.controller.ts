@@ -9,7 +9,7 @@ import { AdminAuthService, IAdminLoginResult } from '../services/admin-auth.serv
 @ApiTags('Auth')
 @Public()
 @SkipKeyCheck()
-@Controller('auth')
+@Controller('admin')
 export class AdminAuthController {
   constructor(private readonly service: AdminAuthService) {}
 

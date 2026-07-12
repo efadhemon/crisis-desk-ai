@@ -8,7 +8,7 @@ import { Request } from 'express';
  *
  * When `AUTH_ENABLED` is false (default) the guard is a no-op so automated
  * graders can exercise the endpoints without credentials. When true it requires
- * a valid admin JWT issued by `POST /api/auth/login`.
+ * a valid admin JWT issued by `POST /api/admin/login`.
  */
 @Injectable()
 export class AdminGuard implements CanActivate {

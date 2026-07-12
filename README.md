@@ -147,11 +147,11 @@ Base URL: `/api`
 | PATCH  | `/api/reports/:id/status`    | admin\* | Update report status                              |
 | DELETE | `/api/reports/:id`           | admin\* | Delete a report                                   |
 | GET    | `/api/reports/stats/summary` | public  | Analytics summary                                 |
-| POST   | `/api/auth/login`            | public  | Admin login → JWT                                 |
+| POST   | `/api/admin/login`           | public  | Admin login → JWT                                 |
 
 \* Admin endpoints are open by default (`AUTH_ENABLED=false`) so they can be
 graded without credentials. Set `AUTH_ENABLED=true` to require the JWT from
-`/api/auth/login` (send `Authorization: Bearer <token>`).
+`/api/admin/login` (send `Authorization: Bearer <token>`).
 
 Full request/response examples, filters, and error formats are in
 [docs/API.md](docs/API.md).
