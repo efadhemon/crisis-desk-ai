@@ -31,12 +31,18 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
 
-    const isPublic = this.reflector.get<boolean>(IS_PUBLIC_KEY, context.getHandler());
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!isPublic) {
       await this.validateAuth(request);
     }
 
-    const skipKeyCheck = this.reflector.get<boolean>(SKIP_KEY_CHECK, context.getHandler());
+    const skipKeyCheck = this.reflector.getAllAndOverride<boolean>(SKIP_KEY_CHECK, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!skipKeyCheck) {
       await this.validateKeys(request);
     }

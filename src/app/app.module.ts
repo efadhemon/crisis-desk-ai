@@ -19,6 +19,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/guards/local-auth.guard';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ReportModule } from './modules/report/report.module';
 import { SystemModule } from './modules/system/system.module';
 import { UserModule } from './modules/user/user.module';
 import { UniqueValidatorPipe } from './pipes/uniqueValidator.pipe';
@@ -49,6 +50,7 @@ const MODULES = [
   CacheModule,
   EventModule,
   QueueModule,
+  ReportModule,
 ];
 const PIPES = [UniqueValidatorPipe];
 

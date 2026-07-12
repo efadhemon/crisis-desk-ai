@@ -85,6 +85,28 @@ export const ENV = {
   auth: {
     otpExpireIn: toNumber(process.env.OTP_EXPIRES_IN),
     skipAuth: toBool(process.env.SKIP_AUTH),
+    // When false (default), admin-only endpoints are open so automated graders can call them.
+    // Flip to true to enforce JWT admin auth on PATCH status / DELETE.
+    enabled: toBool(process.env.AUTH_ENABLED),
+  },
+
+  admin: {
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
+  },
+
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+    embedModel: process.env.GEMINI_EMBED_MODEL || 'gemini-embedding-001',
+    embedDim: toNumber(process.env.GEMINI_EMBED_DIM) || 768,
+    baseUrl:
+      process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/models',
+  },
+
+  duplicate: {
+    // Cosine similarity (0-1). Above this, a new report is flagged as a possible duplicate.
+    similarityThreshold: Number(process.env.DUPLICATE_SIMILARITY_THRESHOLD) || 0.85,
   },
   s3: {
     region: process.env.S3_REGION,
