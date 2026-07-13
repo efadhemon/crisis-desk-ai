@@ -1,8 +1,6 @@
-import { GlobalConfig } from '@src/app/modules/globalConfig/entities/globalConfig.entity';
 import { User } from '@src/app/modules/user/entities/user.entity';
 import { ENV } from '@src/env';
 import { DataSource } from 'typeorm';
-import GlobalConfigSeeder from './seeder/globalConfig.seeder';
 import UserSeeder from './seeder/user.seeder';
 
 const dataSource = new DataSource({
@@ -20,18 +18,16 @@ const dataSource = new DataSource({
         rejectUnauthorized: ENV.db.rejectUnauthorized,
       }
     : false,
-  entities: [User, GlobalConfig],
+  entities: [User],
 });
 
 (async () => {
   await dataSource.initialize();
   await dataSource.synchronize();
 
-  const globalConfigSeeder = new GlobalConfigSeeder(dataSource);
   const userSeeder = new UserSeeder(dataSource);
 
   await userSeeder.run();
-  await globalConfigSeeder.run();
 
   await dataSource.destroy();
 })();

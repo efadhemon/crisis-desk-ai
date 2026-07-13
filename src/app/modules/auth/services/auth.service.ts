@@ -5,7 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { BcryptHelper, EmailHelper } from '@src/app/helpers';
+import { BcryptHelper } from '@src/app/helpers';
 import { FileUploadHelper } from '@src/app/helpers/fileUpload.helper';
 import { IAuthUser, ILginResponse, IValidateResponse } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
@@ -21,11 +21,6 @@ import authenticator from 'otplib';
 import { toDataURL } from 'qrcode';
 import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
-import { GlobalConfigService } from '../../globalConfig/services/globalConfig.service';
-
-import { ENUM_NOTIFICATION_TYPE } from '../../notification/enums';
-import { EmailNotificationService } from '../../notification/services/emailNotification.service';
-import { SmsNotificationService } from '../../notification/services/smsNotification.service';
 import { User } from '../../user/entities/user.entity';
 import { ENUM_AUTH_PROVIDERS, ENUM_USER_TYPES } from '../../user/enums';
 import { Authenticate2faDTO } from '../dtos/authenticate2fa.dto';
@@ -52,11 +47,7 @@ export class AuthService {
     private readonly http: HttpService,
     private readonly jwtHelper: JWTHelper,
     private readonly bcryptHelper: BcryptHelper,
-    private readonly emailHelper: EmailHelper,
-    private readonly globalConfigService: GlobalConfigService,
     private readonly fileUploadHelper: FileUploadHelper,
-    private readonly emailNotificationService: EmailNotificationService,
-    private readonly smsNotificationService: SmsNotificationService,
   ) {}
 
   async loginResponse(
@@ -867,55 +858,17 @@ export class AuthService {
       );
     }
 
-    const config = await this.globalConfigService.getConfig();
-    const expiresIn = config.otpExpiresInMin;
-
+    const expiresIn = 5;
     const otp = gen6digitOTP();
     const hash = this.jwtHelper.generateOtpHash(identifier, otp, expiresIn);
 
-    let message: string;
     const messageType =
       verificationType === ENUM_VERIFICATION_TYPES.SIGN_UP ? 'Sign Up' : 'Reset Password';
+    const channel = sentTo.isEmail ? 'email' : 'phone number';
+    const message = `Your OTP for ${messageType} has been generated. It will expire in ${expiresIn} minutes.`;
 
-    if (sentTo.isEmail) {
-      let template = '';
-      if (verificationType === ENUM_VERIFICATION_TYPES.SIGN_UP) {
-        template = 'account-verify';
-      }
-      if (verificationType === ENUM_VERIFICATION_TYPES.RESET_PASSWORD) {
-        template = 'reset-password';
-      }
-      const emailContent = await this.emailHelper.createEmailContent(
-        { otp, clientName: user.fullName, expiresIn, copyRightYear: new Date().getFullYear() },
-        template,
-      );
-      try {
-        await this.emailNotificationService.createNotification({
-          type: ENUM_NOTIFICATION_TYPE.PROFILE_VERIFIED,
-          title: `Verification OTP - ${user.fullName}`,
-          recipient: identifier,
-          subject: `Verification OTP - ${user.fullName}`,
-          body: emailContent,
-        });
-        message = `Your OTP for ${messageType} is send to your email. It will expire in ${expiresIn} minutes.`;
-      } catch (error) {
-        message = `Error sending OTP to your email. Please try again later.`;
-        console.error('🚀 ~ AuthService ~ otpSentForVerification ~ type:email ~ error:', error);
-      }
-    } else if (sentTo.isPhoneNumber) {
-      const smsContent = `Your OTP for ${verificationType} is ${otp}. It will expire in ${expiresIn} minutes.`;
-      try {
-        await this.smsNotificationService.createNotification({
-          type: ENUM_NOTIFICATION_TYPE.PROFILE_VERIFIED,
-          title: `Verification OTP - ${user.fullName}`,
-          recipient: identifier,
-          body: smsContent,
-        });
-        message = `Your OTP for ${messageType} is send to your phone number. It will expire in ${expiresIn} minutes.`;
-      } catch (error) {
-        console.error('🚀 ~ AuthService ~ otpSentForVerification ~ type:phone ~ error:', error);
-        message = `Error sending OTP to your phone number. Please try again later.`;
-      }
+    if (!ENV.isProduction) {
+      console.info(`[dev] OTP for ${channel} ${identifier}: ${otp}`);
     }
 
     const response = {

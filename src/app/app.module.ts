@@ -13,10 +13,8 @@ import { ClsUserInterceptor } from './interceptors/clsUser.interceptor';
 import { RequestLoggerMiddleware } from './middlewares/requestLogger.middleware';
 import { CacheModule } from './modules/@cache/cache.module';
 import { EventModule } from './modules/@event/event.module';
-import { QueueModule } from './modules/@queue/queue.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/guards/local-auth.guard';
-import { NotificationModule } from './modules/notification/notification.module';
 import { ReportModule } from './modules/report/report.module';
 import { SystemModule } from './modules/system/system.module';
 import { UserModule } from './modules/user/user.module';
@@ -41,11 +39,9 @@ const MODULES = [
   SystemModule,
   HelpersModule,
   AuthModule,
-  NotificationModule,
   UserModule,
   CacheModule,
   EventModule,
-  QueueModule,
   ReportModule,
 ];
 const PIPES = [UniqueValidatorPipe];

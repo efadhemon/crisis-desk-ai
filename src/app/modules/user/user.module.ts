@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HelpersModule } from '@src/app/helpers/helpers.module';
-import { GlobalConfigModule } from '../globalConfig/globalConfig.module';
 import { UserController } from './controllers/user.controller';
 import { User } from './entities/user.entity';
 import { UserService } from './services/user.service';
@@ -14,7 +13,7 @@ const subscribers = [UserSubscriber];
 
 const controllers = [UserController];
 
-const modules = [HelpersModule, GlobalConfigModule];
+const modules = [HelpersModule];
 
 @Module({
   imports: [TypeOrmModule.forFeature(entities), ...modules],
