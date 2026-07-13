@@ -80,7 +80,6 @@ COPY --from=builder /app/dist ./dist
 # Copy runtime files
 COPY package.json ./
 COPY entrypoint.sh ./
-COPY views ./views
 
 RUN chmod +x ./entrypoint.sh
 

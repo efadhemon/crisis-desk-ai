@@ -42,13 +42,14 @@ jobs:
           echo "📂 List files in environments directory:"
           ls -l ./environments
 
-          echo "🌱 Export env vars to shell"
+          echo "🌱 Export env vars to shell (for compose generation)"
           set -a
           source ./environments/${{env.NODE_ENV}}.env
           set +a
 
-          echo "📦 Generating docker-compose.yml"
-          envsubst < docker-compose.template.yml > docker-compose.yml
+          echo "📦 Generating docker-compose.yml (full stack: db + valkey + app)"
+          # Only bake CI/image identity; leave DB/Valkey/PORT for compose --env-file on the server.
+          envsubst '$DOCKER_USER $APP_NAME $NODE_ENV' < docker-compose.template.yml > docker-compose.yml
 
           echo "📄 Display docker-compose.yml:"
           cat docker-compose.yml
@@ -72,6 +73,7 @@ jobs:
           key: ${{ env.SSH_KEY }}
           script: |
             sudo mkdir -p ${{ env.DEPLOY_DIRECTORY }}
+            sudo mkdir -p ${{ env.DEPLOY_DIRECTORY }}/logs
             sudo chown -R ${{ env.USER }}:${{ env.USER }} ${{ env.DEPLOY_DIRECTORY }}
 
       - name: Transfer Docker Compose and Env Files
@@ -111,16 +113,16 @@ jobs:
             echo "Logging to Docker Hub"
             $DOCKER login -u ${{env.DOCKER_USER}} -p ${{env.DOCKER_PASSWORD}}
 
-            echo "Stopping previous build"
-            $DOCKER stop ${{ env.APP_NAME }} || true
+            echo "Pulling images (app + db + valkey)"
+            $DOCKER compose --env-file environments/${{env.NODE_ENV}}.env -f docker-compose.yml pull
 
-            echo "Removing previous build"
-            $DOCKER rm ${{ env.APP_NAME }} || true
+            echo "Starting full stack"
+            $DOCKER compose --env-file environments/${{env.NODE_ENV}}.env -f docker-compose.yml up -d --remove-orphans
 
-            echo "Remove previous image"
-            $DOCKER image prune -a -f
+            echo "Pruning dangling images"
+            $DOCKER image prune -f
 
-            echo "Starting latest build"
-            $DOCKER compose --env-file environments/${{env.NODE_ENV}}.env -f docker-compose.yml up -d
+            echo "📋 Running containers:"
+            $DOCKER compose --env-file environments/${{env.NODE_ENV}}.env -f docker-compose.yml ps
 
             echo "Deploy Done"

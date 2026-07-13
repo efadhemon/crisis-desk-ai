@@ -237,14 +237,25 @@ mocked).
 
 ## Deployment
 
-Any host offering Postgres (with pgvector) + Valkey (or Redis-compatible
-store) works (Railway, Render, etc.):
+### Docker-only (recommended)
 
-1. Provision Postgres and enable pgvector (`CREATE EXTENSION vector;` — the
-   migration also does this) and a Valkey instance.
-2. Set env vars (DB, Valkey queue/cache, `GEMINI_API_KEY`, `JWT_SECRET`, admin creds).
-3. Run `yarn migration:run` then start the app (Docker image entrypoint does
-   this automatically).
+Push to `main` runs `.github/workflows/deploy.yml`. The server needs **only
+Docker** (no host Postgres, Valkey, or nginx). CI builds/pushes the API image,
+writes `environments/production.env` from `PRODUCTION_ENV_VARS`, generates a
+full-stack `docker-compose.yml` (db + valkey + app) from
+`docker-compose.template.yml`, and runs `docker compose up -d` on the host.
+
+Compose overrides `DB_HOST` / Valkey hosts to the internal service names. Set
+`GEMINI_API_KEY`, `JWT_SECRET`, `SUPER_ADMIN_*`, `DB_*`, and matching
+`QUEUE_PASSWORD` / `CACHE_STORE_PASSWORD` in the production secret. The API
+listens on host `PORT` (default `5000`). Migrations and seed run in the image
+entrypoint.
+
+### External managed services
+
+Alternatively, provision Postgres (with pgvector) + Valkey elsewhere, point the
+env file at them, and run only the API container (or `yarn migration:run` then
+start the app).
 
 ## License
 
