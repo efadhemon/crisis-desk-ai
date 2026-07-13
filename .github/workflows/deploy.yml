@@ -6,17 +6,17 @@ on:
 
 env:
   NODE_ENV: production
-  SERVICE_NAME: crisisdesk-api
-  DEPLOY_DIRECTORY: '~/deploy/crisisdesk-api'
+  APP_NAME: crisisdesk-api
+  DEPLOY_DIRECTORY: '/deploy/crisisdesk-api'
 
   DOCKER_USER: ${{ secrets.DOCKER_HUB_USER }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-  HOST: ${{ secrets.STAGING_HOST }}
-  USER: ${{ secrets.STAGING_USER }}
-  SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+  HOST: ${{ secrets.SERVER_HOST }}
+  USER: ${{ secrets.SERVER_USER }}
+  SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
-  ENV_VARS: ${{ secrets.STAGING_ENV_VARS }}
+  ENV_VARS: ${{ secrets.PRODUCTION_ENV_VARS }}
 
 jobs:
   Build:
@@ -76,9 +76,9 @@ jobs:
       - name: Log in to Docker Hub
         run: docker login -u ${{env.DOCKER_USER}} -p ${{env.DOCKER_PASSWORD}}
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{env.DOCKER_USER}}/${{env.SERVICE_NAME}}:latest
+        run: docker build . --file Dockerfile --tag ${{env.DOCKER_USER}}/${{env.APP_NAME}}:latest
       - name: Docker Push
-        run: docker push ${{env.DOCKER_USER}}/${{env.SERVICE_NAME}}:latest
+        run: docker push ${{env.DOCKER_USER}}/${{env.APP_NAME}}:latest
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
@@ -93,10 +93,10 @@ jobs:
             docker login -u ${{env.DOCKER_USER}} -p ${{env.DOCKER_PASSWORD}}
 
             echo "Stopping previous build"
-            docker stop ${{ env.SERVICE_NAME }} || true
+            docker stop ${{ env.APP_NAME }} || true
 
             echo "Removing previous build"
-            docker rm ${{ env.SERVICE_NAME }} || true
+            docker rm ${{ env.APP_NAME }} || true
 
             echo "Remove previous image"
             docker image prune -a -f

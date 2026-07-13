@@ -1,5 +1,5 @@
 import { BaseEntity } from '@src/app/base';
-import { AutoEntity, AutoIndex } from '@src/database/decorators';
+import { AutoEntity, AutoIndex, IgnoredColumn } from '@src/database/decorators';
 import { ENUM_COLUMN_TYPES } from '@src/shared';
 import { Column } from 'typeorm';
 import {
@@ -70,10 +70,7 @@ export class Report extends BaseEntity {
   })
   status?: ENUM_REPORT_STATUS;
 
-  @AutoIndex()
-  @Column({
-    type: ENUM_COLUMN_TYPES.VECTOR,
-    length: 768,
-  })
-  embedding?: any;
+  /** Managed outside TypeORM (pgvector + HNSW). See `@IgnoredColumn`. */
+  @IgnoredColumn()
+  embedding?: number[] | null;
 }

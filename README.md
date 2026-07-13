@@ -213,10 +213,10 @@ On submission the API finds the nearest existing report (pre-filtered by
 category) and flags `possibleDuplicate` when `1 - cosine_distance >=
 DUPLICATE_SIMILARITY_THRESHOLD`.
 
-> The `embedding` column is provisioned by the hand-written migration
-> `1784200000000-add-reports-and-pgvector.ts` and maintained via raw SQL, because
-> TypeORM has no native `vector` type. Do not run `migration:generate` without
-> re-adding this column, or the generated migration will try to drop it.
+> The `embedding` column and HNSW index are managed via raw SQL (see the reports
+> schema migration). Mark the property with `@IgnoredColumn()` so TypeORM treats
+> it as virtual; `yarn migration:generate` strips any generated DROP/ADD for
+> that column and its index.
 
 ## Migrations
 

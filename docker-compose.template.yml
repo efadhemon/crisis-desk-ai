@@ -1,7 +1,7 @@
 services:
-  ${SERVICE_NAME}:
-    container_name: ${SERVICE_NAME}
-    image: efadhemon/${SERVICE_NAME}:latest
+  ${APP_NAME}:
+    container_name: ${APP_NAME}
+    image: ${DOCKER_USER}/${APP_NAME}:latest
     ports:
       - '${PORT}:${PORT}'
     volumes:
