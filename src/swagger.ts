@@ -78,8 +78,6 @@ const DOC_CATEGORIES = {
  */
 const SECURITY_SCHEMES = {
   BEARER: 'bearer',
-  API_KEY: 'X-Api-Key',
-  PANEL_KEY: 'X-Panel-Key',
 };
 
 /**
@@ -111,38 +109,16 @@ function createBaseDocumentBuilder() {
     .setDescription(ENV.api.API_DESCRIPTION)
     .setVersion(ENV.api.API_VERSION);
 
-  return (
-    builder
-      // Security Schemes
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'Authorization',
-          description: 'Enter JWT token for user authentication',
-          in: 'header',
-        },
-        SECURITY_SCHEMES.BEARER,
-      )
-      .addApiKey(
-        {
-          type: 'apiKey',
-          name: 'X-Panel-Key',
-          in: 'header',
-          description: 'API key for admin panel access',
-        },
-        SECURITY_SCHEMES.PANEL_KEY,
-      )
-      .addApiKey(
-        {
-          type: 'apiKey',
-          name: 'X-Api-Key',
-          in: 'header',
-          description: 'API key for service-to-service communication',
-        },
-        SECURITY_SCHEMES.API_KEY,
-      )
+  return builder.addBearerAuth(
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'Authorization',
+      description: 'Enter JWT token for user authentication',
+      in: 'header',
+    },
+    SECURITY_SCHEMES.BEARER,
   );
 }
 

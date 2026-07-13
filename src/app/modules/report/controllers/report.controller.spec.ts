@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SuccessResponse } from '@src/app/types';
 import { ENUM_REPORT_CATEGORY, ENUM_REPORT_STATUS, ENUM_REPORT_URGENCY } from '../enums';
 import { Report } from '../entities/report.entity';
-import { AdminGuard } from '../guards/admin.guard';
 import { ReportService } from '../services/report.service';
 import { ReportController } from './report.controller';
 
@@ -30,10 +29,7 @@ describe('ReportController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReportController],
       providers: [{ provide: ReportService, useValue: service }],
-    })
-      .overrideGuard(AdminGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    }).compile();
 
     controller = module.get(ReportController);
   });

@@ -169,7 +169,8 @@ Error `404`:
 
 ## PATCH /api/reports/:id/status
 
-Update a report's status. Admin-gated when `AUTH_ENABLED=true`.
+Update a report's status. Requires a Bearer JWT from `POST /api/auth/login`
+for an `INTERNAL` user (seeded superadmin).
 
 Request body:
 
@@ -180,13 +181,13 @@ Request body:
 Response `200`: the updated report object.
 
 Errors: `400` for an invalid status value, `404` if the report does not exist,
-`401` if `AUTH_ENABLED=true` and no valid admin token is provided.
+`401` if no valid admin token is provided.
 
 ---
 
 ## DELETE /api/reports/:id
 
-Delete a report. Admin-gated when `AUTH_ENABLED=true`.
+Delete a report. Requires a Bearer JWT from `POST /api/auth/login`.
 
 Response `200`:
 
@@ -230,14 +231,16 @@ Response `200`:
 
 ---
 
-## POST /api/admin/login
+## POST /api/auth/login
 
-Admin login. Returns a JWT used for admin-gated endpoints.
+Internal / superadmin login via the auth module. Returns JWTs used for
+admin-gated report endpoints. Credentials come from the seeded user
+(`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` via `yarn db:seed`).
 
 Request body:
 
 ```json
-{ "email": "admin@crisisdesk.ai", "password": "admin123" }
+{ "identifier": "superadmin@wagehat.com", "password": "123456" }
 ```
 
 Response `200`:
@@ -246,27 +249,31 @@ Response `200`:
 {
   "success": true,
   "statusCode": 200,
-  "message": "Login successful",
-  "data": { "accessToken": "eyJhbGci...", "tokenType": "Bearer", "expiresIn": "1d" }
+  "message": "Logged in successfully",
+  "data": {
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci...",
+    "permissionToken": "eyJhbGci...",
+    "user": {
+      "id": "...",
+      "userType": "internal",
+      "email": "superadmin@wagehat.com",
+      "fullName": "Super Admin",
+      "phoneNumber": null,
+      "authProvider": "system",
+      "roles": []
+    }
+  }
 }
 ```
 
-Use the token on admin endpoints:
+Use the access token on admin endpoints:
 
 ```
 Authorization: Bearer <accessToken>
 ```
 
-Error `401`:
-
-```json
-{
-  "success": false,
-  "statusCode": 401,
-  "message": "Invalid admin credentials.",
-  "errorMessages": ["Invalid admin credentials."]
-}
-```
+Error `401`: invalid credentials or account not found.
 
 ---
 

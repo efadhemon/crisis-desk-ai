@@ -7,6 +7,7 @@ export enum ENUM_COLUMN_TYPES {
   FLOAT = 'float',
   TEXT = 'text',
   VARCHAR = 'varchar',
+  VECTOR = 'vector',
   BOOLEAN = 'boolean',
   DATE = 'date',
   TIMESTAMP_UTC = 'timestamp without time zone',

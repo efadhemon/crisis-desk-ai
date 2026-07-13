@@ -1,5 +1,5 @@
 import { Body, Controller, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@src/app/decorators';
 import { Public } from '@src/app/decorators/publicRoute.decorator';
 import { IAuthUser, ILginResponse } from '@src/app/interfaces';
@@ -16,8 +16,6 @@ import { AuthService } from '../services/auth.service';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
-@ApiSecurity('X-Panel-Key')
-@ApiSecurity('X-Api-Key')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@src/app/decorators';
 import { IAuthUser } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
@@ -12,8 +12,6 @@ import { UserService } from '../services/user.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
-@ApiSecurity('X-Panel-Key')
-@ApiSecurity('X-Api-Key')
 @Controller(User.apiRouteName)
 export class UserController {
   constructor(private readonly service: UserService) {}

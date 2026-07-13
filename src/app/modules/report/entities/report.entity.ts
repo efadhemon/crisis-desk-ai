@@ -70,9 +70,10 @@ export class Report extends BaseEntity {
   })
   status?: ENUM_REPORT_STATUS;
 
-  // NOTE: The `embedding vector(768)` column is created and maintained via the
-  // hand-written pgvector migration and raw SQL in DuplicateService. It is
-  // intentionally NOT a TypeORM-decorated column because TypeORM has no native
-  // `vector` type. Do not run `migration:generate` without re-adding it, or the
-  // generated migration will attempt to drop the column.
+  @AutoIndex()
+  @Column({
+    type: ENUM_COLUMN_TYPES.VECTOR,
+    length: 768,
+  })
+  embedding?: any;
 }

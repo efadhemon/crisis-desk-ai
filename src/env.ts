@@ -74,14 +74,6 @@ export const ENV = {
 
   auth: {
     skipAuth: toBool(process.env.SKIP_AUTH),
-    // When false (default), admin-only endpoints are open so automated graders can call them.
-    // Flip to true to enforce JWT admin auth on PATCH status / DELETE.
-    enabled: toBool(process.env.AUTH_ENABLED),
-  },
-
-  admin: {
-    email: process.env.ADMIN_EMAIL,
-    password: process.env.ADMIN_PASSWORD,
   },
 
   gemini: {

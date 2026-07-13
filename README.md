@@ -21,7 +21,7 @@ exposes admin APIs for management and analytics.
 ## Architecture
 
 ```
-Client ── POST /api/reports ──▶ ReportController (@Public, @SkipKeyCheck)
+Client ── POST /api/reports ──▶ ReportController (@Public on public routes)
                                      │
                                      ▼
                               ReportService
@@ -63,7 +63,7 @@ Edit `environments/development.env` and set at least:
 
 - `GEMINI_API_KEY`
 - `JWT_SECRET`
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+- `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` (seeded via `yarn db:seed`, used with `POST /auth/login`)
 
 Point DB and Valkey at the Compose-published host ports:
 
@@ -178,8 +178,9 @@ Key CrisisDesk settings:
 | `GEMINI_EMBED_MODEL`             | `gemini-embedding-001` | Embedding model (768 dims)                       |
 | `GEMINI_EMBED_DIM`               | `768`                  | Embedding dimensionality (matches `vector(768)`) |
 | `DUPLICATE_SIMILARITY_THRESHOLD` | `0.85`                 | Cosine similarity to flag a duplicate            |
-| `AUTH_ENABLED`                   | `false`                | Enforce admin JWT on status/delete when `true`   |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | —                      | Admin login credentials                          |
+| `SUPER_ADMIN_EMAIL`              | —                      | Seeded superadmin email (`yarn db:seed`)         |
+| `SUPER_ADMIN_PASSWORD`           | —                      | Seeded superadmin password                       |
+| `JWT_SECRET`                     | —                      | Secret for signing auth JWTs                     |
 
 When `GEMINI_API_KEY` is unset, the API still works: reports are stored with
 safe fallback classification and duplicate detection is skipped.
@@ -196,11 +197,11 @@ Base URL: `/api`
 | PATCH  | `/api/reports/:id/status`    | admin\* | Update report status                              |
 | DELETE | `/api/reports/:id`           | admin\* | Delete a report                                   |
 | GET    | `/api/reports/stats/summary` | public  | Analytics summary                                 |
-| POST   | `/api/admin/login`           | public  | Admin login → JWT                                 |
+| POST   | `/api/auth/login`            | public  | Superadmin / internal login → JWT                 |
 
-\* Admin endpoints are open by default (`AUTH_ENABLED=false`) so they can be
-graded without credentials. Set `AUTH_ENABLED=true` to require the JWT from
-`/api/admin/login` (send `Authorization: Bearer <token>`).
+\* Admin endpoints require a Bearer JWT from `POST /api/auth/login` for an
+`INTERNAL` user (the seeded superadmin). Send
+`Authorization: Bearer <accessToken>`.
 
 Full request/response examples, filters, and error formats are in
 [docs/API.md](docs/API.md).
