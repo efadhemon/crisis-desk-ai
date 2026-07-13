@@ -15,7 +15,7 @@ exposes admin APIs for management and analytics.
 - **Google Gemini** (`generateContent` for triage, `embedContent` for embeddings)
 - **Swagger / OpenAPI** (`/docs`)
 - **@nestjs/throttler** (rate limiting), **helmet** (security headers)
-- **Valkey/Redis** (cache + queues, used by the platform)
+- **Valkey** (cache + queues via `iovalkey`, Redis-compatible)
 - **Jest** (unit/integration tests), **Docker + docker-compose**
 
 ## Architecture
@@ -45,12 +45,12 @@ Report submission pipeline:
 ## Prerequisites
 
 - Node.js `22.x` (see `.nvmrc`)
-- Docker + Docker Compose (for Postgres/pgvector and Redis)
+- Docker + Docker Compose (for Postgres/pgvector and Valkey)
 - A Gemini API key (`GEMINI_API_KEY`)
 
 ## Quick start (local development — recommended)
 
-Run **Postgres + Redis in Docker**, and the API on the host with `yarn dev`
+Run **Postgres + Valkey in Docker**, and the API on the host with `yarn dev`
 (hot reload).
 
 ### 1. Configure environment
@@ -65,7 +65,7 @@ Edit `environments/development.env` and set at least:
 - `JWT_SECRET`
 - `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 
-Point DB and Redis at the Compose-published host ports:
+Point DB and Valkey at the Compose-published host ports:
 
 ```env
 DB_TYPE=postgres
@@ -89,35 +89,35 @@ CACHE_STORE_USERNAME=default
 CACHE_TTL=60
 ```
 
-> Compose exposes a single Redis instance on host port `6380`. Use that same
+> Compose exposes a single Valkey instance on host port `6380`. Use that same
 > host/port/password for both queue and cache settings when developing locally.
 
-### 2. Start Postgres + Redis
+### 2. Start Postgres + Valkey
 
 ```shell
-docker compose up db redis -d
+docker compose up db valkey -d
 ```
 
 | Service  | Host port | Default credentials                         |
 | -------- | --------- | ------------------------------------------- |
 | Postgres | `5433`    | user/pass `crisisdesk`, db `crisis-desk-ai` |
-| Redis    | `6380`    | password `crisisdesk`                       |
+| Valkey   | `6380`    | password `crisisdesk`                       |
 
 Useful commands:
 
 ```shell
 docker compose ps
-docker compose logs -f db redis
-docker compose stop db redis    # stop infra
-docker compose down             # stop + remove containers (DB volume is kept)
+docker compose logs -f db valkey
+docker compose stop db valkey    # stop infra
+docker compose down              # stop + remove containers (DB volume is kept)
 ```
 
 Override ports/credentials if needed:
 
 ```shell
-DB_PORT_HOST=5544 REDIS_PORT_HOST=6390 REDIS_PASSWORD=secret \
+DB_PORT_HOST=5544 VALKEY_PORT_HOST=6390 VALKEY_PASSWORD=secret \
   DB_USERNAME=crisisdesk DB_PASSWORD=crisisdesk DB_DATABASE=crisis-desk-ai \
-  docker compose up db redis -d
+  docker compose up db valkey -d
 ```
 
 ### 3. Install, migrate, and run the API
@@ -135,7 +135,7 @@ yarn dev           # NestJS watch mode
 
 ## Full stack with Docker Compose
 
-Run Postgres, Redis, **and** the API all in containers:
+Run Postgres, Valkey, **and** the API all in containers:
 
 ```shell
 # put GEMINI_API_KEY (and other config) in environments/development.env first
@@ -144,26 +144,26 @@ NODE_ENV=production docker compose up --build    # uses environments/production.
 NODE_ENV=staging    docker compose up --build    # uses environments/staging.env
 ```
 
-Compose overrides `DB_HOST` / Redis hosts inside the `app` container so the API
-reaches the internal `db` and `redis` services. The `localhost:5433/6380` values
+Compose overrides `DB_HOST` / Valkey hosts inside the `app` container so the API
+reaches the internal `db` and `valkey` services. The `localhost:5433/6380` values
 in your env file are only for host-based `yarn dev`.
 
 - API base: `http://localhost:5000/api`
 - Swagger UI: `http://localhost:5000/docs`
 
-| Service  | Host port (default) | Override var      |
-| -------- | ------------------- | ----------------- |
-| API      | `5000`              | `APP_PORT`        |
-| Postgres | `5433`              | `DB_PORT_HOST`    |
-| Redis    | `6380`              | `REDIS_PORT_HOST` |
+| Service  | Host port (default) | Override var       |
+| -------- | ------------------- | ------------------ |
+| API      | `5000`              | `APP_PORT`         |
+| Postgres | `5433`              | `DB_PORT_HOST`     |
+| Valkey   | `6380`              | `VALKEY_PORT_HOST` |
 
 ```shell
-APP_PORT=8080 DB_PORT_HOST=5544 REDIS_PORT_HOST=6390 docker compose up --build
+APP_PORT=8080 DB_PORT_HOST=5544 VALKEY_PORT_HOST=6390 docker compose up --build
 ```
 
 App-level config (Gemini, JWT, admin, rate limits, etc.) comes from
 `environments/<NODE_ENV>.env`. Infrastructure credentials can also be set via
-`DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, and `REDIS_PASSWORD`.
+`DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, and `VALKEY_PASSWORD`.
 
 ## Environment variables
 
@@ -236,11 +236,12 @@ mocked).
 
 ## Deployment
 
-Any host offering Postgres (with pgvector) + Redis works (Railway, Render, etc.):
+Any host offering Postgres (with pgvector) + Valkey (or Redis-compatible
+store) works (Railway, Render, etc.):
 
 1. Provision Postgres and enable pgvector (`CREATE EXTENSION vector;` — the
-   migration also does this) and a Redis instance.
-2. Set env vars (DB, Redis, `GEMINI_API_KEY`, `JWT_SECRET`, admin creds).
+   migration also does this) and a Valkey instance.
+2. Set env vars (DB, Valkey queue/cache, `GEMINI_API_KEY`, `JWT_SECRET`, admin creds).
 3. Run `yarn migration:run` then start the app (Docker image entrypoint does
    this automatically).
 

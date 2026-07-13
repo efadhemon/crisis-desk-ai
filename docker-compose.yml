@@ -1,4 +1,4 @@
-# CrisisDesk AI — fully self-contained stack (Postgres + pgvector, Redis, API).
+# CrisisDesk AI — fully self-contained stack (Postgres + pgvector, Valkey, API).
 #
 # 1) Put your config (incl. GEMINI_API_KEY) in environments/development.env
 #    (or production.env / staging.env). The app service loads it via env_file.
@@ -9,12 +9,12 @@
 #      NODE_ENV=staging    docker compose up --build      # uses staging.env
 #
 # Host ports default to NON-standard values so they never clash with a globally
-# installed Postgres (5432) or Redis (6379). Override any of them if needed:
+# installed Postgres (5432) or Valkey/Redis (6379). Override any of them if needed:
 #
-#   APP_PORT=5000 DB_PORT_HOST=5433 REDIS_PORT_HOST=6380 docker compose up --build
+#   APP_PORT=5000 DB_PORT_HOST=5433 VALKEY_PORT_HOST=6380 docker compose up --build
 #
 # Inside the compose network the services still use their standard ports
-# (db:5432, redis:6379); only the host-published ports change. The DB/Redis
+# (db:5432, valkey:6379); only the host-published ports change. The DB/Valkey
 # connection settings and credentials are pinned to the compose services (the
 # env file's localhost:5433/6380 values are only for host-based dev).
 
@@ -40,15 +40,15 @@ services:
     networks:
       - crisisdesk-net
 
-  redis:
-    image: redis:7-alpine
-    container_name: crisisdesk-redis
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: crisisdesk-valkey
     restart: unless-stopped
-    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:-crisisdesk}']
+    command: ['valkey-server', '--requirepass', '${VALKEY_PASSWORD:-crisisdesk}']
     ports:
-      - '${REDIS_PORT_HOST:-6380}:6379'
+      - '${VALKEY_PORT_HOST:-6380}:6379'
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-crisisdesk}', 'ping']
+      test: ['CMD', 'valkey-cli', '-a', '${VALKEY_PASSWORD:-crisisdesk}', 'ping']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -64,7 +64,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
     # All app config (Gemini key, JWT, admin creds, etc.) is loaded from the
     # selected environment file. Default is development; switch with NODE_ENV:
@@ -75,7 +75,7 @@ services:
     environment:
       # These override the env file so the app reaches the compose services on the
       # internal network (the env files use localhost:5433/6380 for host-based
-      # dev) and stay in sync with the db/redis credentials configured above.
+      # dev) and stay in sync with the db/valkey credentials configured above.
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 5000
       API_PREFIX: api
@@ -85,14 +85,14 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-crisisdesk}
       DB_DATABASE: ${DB_DATABASE:-crisis-desk-ai}
       DB_SSL_MODE: 'false'
-      QUEUE_HOST: redis
+      QUEUE_HOST: valkey
       QUEUE_PORT: 6379
       QUEUE_USERNAME: default
-      QUEUE_PASSWORD: ${REDIS_PASSWORD:-crisisdesk}
-      CACHE_STORE_HOST: redis
+      QUEUE_PASSWORD: ${VALKEY_PASSWORD:-crisisdesk}
+      CACHE_STORE_HOST: valkey
       CACHE_STORE_PORT: 6379
       CACHE_STORE_USERNAME: default
-      CACHE_STORE_PASSWORD: ${REDIS_PASSWORD:-crisisdesk}
+      CACHE_STORE_PASSWORD: ${VALKEY_PASSWORD:-crisisdesk}
     ports:
       - '${APP_PORT:-5000}:5000'
     volumes:
