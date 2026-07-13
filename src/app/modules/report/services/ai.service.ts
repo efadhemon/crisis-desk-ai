@@ -55,6 +55,7 @@ export class AiService {
       const parsed = JSON.parse(text);
       return this.normalize(parsed, input);
     } catch (error) {
+      console.error('Gemini classification failed:', error);
       this.logger.error(`Gemini classification failed: ${(error as Error)?.message}`);
       return this.fallback(input);
     }
