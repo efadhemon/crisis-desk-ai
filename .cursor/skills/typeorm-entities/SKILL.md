@@ -1,9 +1,9 @@
 ---
-name: wagehat-typeorm-entities
-description: Defines how to author TypeORM entities in wagehat-core-api using AutoEntity, AutoIndex, and AutoJoinColumn. Use when adding or editing entities or database decorators; do not author migration files unless the user explicitly asks (developers generate those via package.json scripts).
+name: typeorm-entities
+description: Defines how to author TypeORM entities in this project using AutoEntity, AutoIndex, and AutoJoinColumn. Use when adding or editing entities or database decorators; do not author migration files unless the user explicitly asks (developers generate those via package.json scripts).
 ---
 
-# Wagehat TypeORM entities (current standard)
+# TypeORM entities (current standard)
 
 ## Do this (new pattern)
 
