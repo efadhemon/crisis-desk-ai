@@ -4,6 +4,8 @@ Base URL: `http://localhost:5000/api`
 
 Interactive docs (Swagger UI): `http://localhost:5000/docs`
 
+Architecture overview: [PROJECT_ARCHITECTURE.md](./PROJECT_ARCHITECTURE.md)
+
 ## Response envelope
 
 All successful responses are wrapped:
@@ -18,7 +20,8 @@ All successful responses are wrapped:
 }
 ```
 
-`meta` is present only on paginated list endpoints.
+`meta` is present only on paginated list endpoints. The JSON `statusCode` is
+always `200` on success; Nest may still return HTTP `201` for `POST` handlers.
 
 All error responses are structured:
 
@@ -83,7 +86,8 @@ Request body:
 Validation: `description` and `location` are required and non-empty; `contact`
 and `name` are optional; `language` must be `bn`, `en`, or `unknown`.
 
-Response `201`:
+HTTP `201` (envelope `statusCode` remains `200`). `data` is the full persisted
+report (fields below are the AI / triage highlights; see [Report object](#report-object)):
 
 ```json
 {
@@ -92,6 +96,11 @@ Response `201`:
   "message": "Report submitted successfully",
   "data": {
     "id": "1f0c...uuid",
+    "name": "Emon",
+    "contact": "017xxxxxxxx",
+    "location": "Sylhet Bondor Bazar",
+    "description": "There is a fire near a shop and people are trapped.",
+    "language": "bn",
     "category": "fire",
     "urgency": "critical",
     "summary": "A fire has been reported near a shop with possible trapped people.",
@@ -99,7 +108,10 @@ Response `201`:
     "confidence": 0.91,
     "possibleDuplicate": false,
     "matchedReportId": null,
-    "status": "pending"
+    "status": "pending",
+    "isActive": true,
+    "createdAt": "2026-07-12T15:30:00.000Z",
+    "updatedAt": "2026-07-12T15:30:00.000Z"
   }
 }
 ```
@@ -169,8 +181,8 @@ Error `404`:
 
 ## PATCH /api/reports/:id/status
 
-Update a report's status. Requires a Bearer JWT from `POST /api/auth/login`
-for an `INTERNAL` user (seeded superadmin).
+Update a report's status. Not marked `@Public()` — requires a Bearer JWT from
+`POST /api/auth/login` (INTERNAL / seeded superadmin).
 
 Request body:
 
@@ -181,13 +193,13 @@ Request body:
 Response `200`: the updated report object.
 
 Errors: `400` for an invalid status value, `404` if the report does not exist,
-`401` if no valid admin token is provided.
+`401` if no valid JWT is provided.
 
 ---
 
 ## DELETE /api/reports/:id
 
-Delete a report. Requires a Bearer JWT from `POST /api/auth/login`.
+Hard-delete a report. Requires a Bearer JWT from `POST /api/auth/login`.
 
 Response `200`:
 
@@ -233,15 +245,18 @@ Response `200`:
 
 ## POST /api/auth/login
 
-Internal / superadmin login via the auth module. Returns JWTs used for
-admin-gated report endpoints. Credentials come from the seeded user
-(`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` via `yarn db:seed`).
+Internal / superadmin login via the auth module. Only `userType: internal`
+accounts can log in here. Returns JWTs used for admin-gated report endpoints.
+Credentials come from the seeded user (`SUPER_ADMIN_EMAIL` /
+`SUPER_ADMIN_PASSWORD` via `yarn db:seed`).
 
 Request body:
 
 ```json
 { "identifier": "efadhemon@gmail.com", "password": "123456" }
 ```
+
+(`identifier` may be email, phone, or username.)
 
 Response `200`:
 
@@ -275,13 +290,22 @@ Authorization: Bearer <accessToken>
 
 Error `401`: invalid credentials or account not found.
 
+Related auth routes (same module):
+
+| Method | Endpoint | Auth | Purpose |
+| ------ | -------- | ---- | ------- |
+| `POST` | `/api/auth/refresh-token` | public | Re-issue tokens from a refresh JWT |
+| `PATCH` | `/api/auth/change-password` | JWT | Change password and re-login |
+
 ---
 
 ## AI / duplicate behaviour notes
 
 - Gemini output is validated: unknown categories fall back to `other`, unknown
   urgency to `medium`, and `confidence` is clamped to `[0, 1]`.
-- If Gemini is unavailable, submission still succeeds with fallback values
-  (`category=other`, `urgency=medium`, `confidence=0`).
+- If Gemini is unavailable (missing key or API error), submission still succeeds
+  with fallback values (`category=other`, `urgency=medium`, `confidence=0`).
 - Duplicate detection uses pgvector cosine similarity; a report is flagged when
-  similarity to the nearest same-category report is `>= DUPLICATE_SIMILARITY_THRESHOLD`.
+  similarity to the nearest same-category report is
+  `>= DUPLICATE_SIMILARITY_THRESHOLD` (default `0.85`). If embedding fails,
+  duplicate detection is skipped and the report is still saved.

@@ -18,6 +18,15 @@ exposes admin APIs for management and analytics.
 - **Valkey** (cache + queues via `iovalkey`, Redis-compatible)
 - **Jest** (unit/integration tests), **Docker + docker-compose**
 
+## Documentation
+
+| Doc | Contents |
+| --- | -------- |
+| [docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md) | Module layout, request lifecycle, report pipeline, auth, DB/pgvector, Docker |
+| [docs/API.md](docs/API.md) | Endpoint reference, request/response examples, enums, error shapes |
+
+Interactive OpenAPI UI: `http://localhost:5000/docs` (after the API is running).
+
 ## Architecture
 
 ```
@@ -37,10 +46,14 @@ Report submission pipeline:
 2. `AiService` → Gemini structured JSON: `category`, `urgency`, `summary`,
    `suggestedAction`, `confidence` (validated against allowed enums; safe
    fallback if Gemini is unavailable so submission never fails).
-3. `EmbeddingService` → 768-dim Gemini embedding of the report text.
+3. `EmbeddingService` → 768-dim Gemini embedding of the report text
+   (`description` + location). Null embedding skips duplicate detection.
 4. `DuplicateService` → pgvector nearest-neighbour (cosine) pre-filtered by
    category; flags `possibleDuplicate` + `matchedReportId` above a threshold.
-5. Persist the report and store its embedding.
+5. Persist the report and store its embedding (raw SQL for the `vector` column).
+
+See [docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md) for the full
+module map, auth model, and request lifecycle.
 
 ## Prerequisites
 
@@ -139,9 +152,8 @@ Run Postgres, Valkey, **and** the API all in containers:
 
 ```shell
 # put GEMINI_API_KEY (and other config) in environments/development.env first
-docker compose up --build                       # uses environments/development.env
+docker compose up --build                        # uses environments/development.env
 NODE_ENV=production docker compose up --build    # uses environments/production.env
-NODE_ENV=staging    docker compose up --build    # uses environments/staging.env
 ```
 
 Compose overrides `DB_HOST` / Valkey hosts inside the `app` container so the API
@@ -181,6 +193,7 @@ Key CrisisDesk settings:
 | `SUPER_ADMIN_EMAIL`              | —                      | Seeded superadmin email (`yarn db:seed`)         |
 | `SUPER_ADMIN_PASSWORD`           | —                      | Seeded superadmin password                       |
 | `JWT_SECRET`                     | —                      | Secret for signing auth JWTs                     |
+| `SKIP_AUTH`                      | `false`                | Bypass global JWT guard (local debugging only)   |
 
 When `GEMINI_API_KEY` is unset, the API still works: reports are stored with
 safe fallback classification and duplicate detection is skipped.
@@ -195,16 +208,17 @@ Base URL: `/api`
 | GET    | `/api/reports`               | public  | List reports with filters + pagination            |
 | GET    | `/api/reports/:id`           | public  | Get a single report                               |
 | PATCH  | `/api/reports/:id/status`    | admin\* | Update report status                              |
-| DELETE | `/api/reports/:id`           | admin\* | Delete a report                                   |
+| DELETE | `/api/reports/:id`           | admin\* | Hard-delete a report                              |
 | GET    | `/api/reports/stats/summary` | public  | Analytics summary                                 |
-| POST   | `/api/auth/login`            | public  | Superadmin / internal login → JWT                 |
+| POST   | `/api/auth/login`            | public  | Internal (superadmin) login → JWT                 |
 
-\* Admin endpoints require a Bearer JWT from `POST /api/auth/login` for an
-`INTERNAL` user (the seeded superadmin). Send
-`Authorization: Bearer <accessToken>`.
+\* Admin endpoints omit `@Public()`, so the global JWT `AuthGuard` requires a
+Bearer access token from `POST /api/auth/login` (INTERNAL users only — typically
+the seeded superadmin). Send `Authorization: Bearer <accessToken>`.
 
-Full request/response examples, filters, and error formats are in
-[docs/API.md](docs/API.md).
+Full request/response examples, filters, and error formats:
+[docs/API.md](docs/API.md). Architecture:
+[docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md).
 
 ## Duplicate detection (pgvector)
 
