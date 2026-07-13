@@ -20,10 +20,10 @@ exposes admin APIs for management and analytics.
 
 ## Documentation
 
-| Doc | Contents |
-| --- | -------- |
+| Doc                                                          | Contents                                                                     |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | [docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md) | Module layout, request lifecycle, report pipeline, auth, DB/pgvector, Docker |
-| [docs/API.md](docs/API.md) | Endpoint reference, request/response examples, enums, error shapes |
+| [docs/API.md](docs/API.md)                                   | Endpoint reference, request/response examples, enums, error shapes           |
 
 Interactive OpenAPI UI: `http://localhost:5000/docs` (after the API is running).
 

@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CacheInterceptor } from '@src/app/modules/@cache';
 import { SuccessResponse } from '@src/app/types';
-import { ENUM_REPORT_CATEGORY, ENUM_REPORT_STATUS, ENUM_REPORT_URGENCY } from '../enums';
 import { Report } from '../entities/report.entity';
+import { ENUM_REPORT_CATEGORY, ENUM_REPORT_STATUS, ENUM_REPORT_URGENCY } from '../enums';
 import { ReportService } from '../services/report.service';
 import { ReportController } from './report.controller';
 
@@ -29,7 +30,10 @@ describe('ReportController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReportController],
       providers: [{ provide: ReportService, useValue: service }],
-    }).compile();
+    })
+      .overrideInterceptor(CacheInterceptor)
+      .useValue({ intercept: (_ctx: unknown, next: { handle: () => unknown }) => next.handle() })
+      .compile();
 
     controller = module.get(ReportController);
   });

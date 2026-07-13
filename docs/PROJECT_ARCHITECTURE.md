@@ -12,7 +12,6 @@ Related docs: [API.md](./API.md) (endpoint reference) · [README.md](../README.m
 
 ## 1. Tech stack
 
-
 | Layer         | Choice                                                       |
 | ------------- | ------------------------------------------------------------ |
 | Runtime       | Node.js 22 (`/.nvmrc`)                                       |
@@ -27,10 +26,7 @@ Related docs: [API.md](./API.md) (endpoint reference) · [README.md](../README.m
 | Tests         | Jest                                                         |
 | Deploy        | Docker multi-stage + Compose; CI on push to `main`           |
 
-
 ---
-
-
 
 ## 2. Repository layout
 
@@ -72,8 +68,6 @@ Path alias: `@src/*` → `src/*`.
 
 ---
 
-
-
 ## 3. Request lifecycle
 
 ```
@@ -104,14 +98,11 @@ success; Nest may still emit HTTP `201` for `@Post()` handlers.
 
 ---
 
-
-
 ## 4. Configuration
 
 `src/env.ts` loads `environments/${NODE_ENV || 'development'}.env` via dotenv and
 exports a typed `ENV` object (api, security, jwt, db, valkey, auth, gemini,
 duplicate, seedData).
-
 
 | Group      | Key variables                                                              |
 | ---------- | -------------------------------------------------------------------------- |
@@ -122,16 +113,12 @@ duplicate, seedData).
 | DB         | `DB_*` (Postgres)                                                          |
 | Valkey     | `QUEUE_*`, `CACHE_STORE_*`, `CACHE_TTL`                                    |
 
-
 Copy `environments/example.env` → `development.env` (or `production.env`) for
 local/deploy use. Those files are gitignored except `example.env`.
 
 ---
 
-
-
 ## 5. Module catalog
-
 
 | Module             | Path                      | Role                                                                             |
 | ------------------ | ------------------------- | -------------------------------------------------------------------------------- |
@@ -143,17 +130,12 @@ local/deploy use. Those files are gitignored except `example.env`.
 | **HelpersModule**  | `src/app/helpers/`        | Global `BcryptHelper`, `JWTHelper`, `HttpModule`                                 |
 | **DatabaseModule** | `src/database/`           | TypeORM root connection                                                          |
 
-
 `AppModule` also registers CLS (`nestjs-cls`), throttling, and the global
 guard / filter / interceptor providers listed above.
 
 ---
 
-
-
 ## 6. Report domain (core)
-
-
 
 ### Layout
 
@@ -172,10 +154,7 @@ report/
     └── duplicate.service.ts   # pgvector nearest neighbour
 ```
 
-
-
 ### HTTP API (`API_PREFIX` → `/api`)
-
 
 | Method   | Path                         | Auth   | Purpose                           |
 | -------- | ---------------------------- | ------ | --------------------------------- |
@@ -185,7 +164,6 @@ report/
 | `GET`    | `/api/reports/:id`           | Public | Single report                     |
 | `PATCH`  | `/api/reports/:id/status`    | JWT    | Update status                     |
 | `DELETE` | `/api/reports/:id`           | JWT    | Hard-delete report                |
-
 
 Admin write routes omit `@Public()`, so the global `AuthGuard` requires a Bearer
 access token. Tokens are issued by `POST /api/auth/login`, which only accepts
@@ -205,7 +183,7 @@ it with raw SQL. An HNSW cosine index is created in the schema migration.
 **Enums**
 
 - `category`: `medical`, `fire`, `accident`, `crime`, `flood`, `utility`,
-`public_service`, `infrastructure`, `other`
+  `public_service`, `infrastructure`, `other`
 - `urgency`: `low`, `medium`, `high`, `critical`
 - `status`: `pending`, `in_review`, `assigned`, `resolved`, `rejected`
 - `language`: `bn`, `en`, `unknown`
@@ -261,10 +239,7 @@ succeeds. A null embedding skips duplicate detection.
 
 ---
 
-
-
 ## 7. Authentication & authorization
-
 
 | Piece                             | Behavior                                                         |
 | --------------------------------- | ---------------------------------------------------------------- |
@@ -274,16 +249,12 @@ succeeds. A null embedding skips duplicate detection.
 | `PATCH /api/auth/change-password` | JWT required                                                     |
 | Report admin routes               | Any valid JWT (no `@Roles` / userType check on the route itself) |
 
-
 In practice only INTERNAL users can log in through `/auth/login`, so admin
 tokens come from the seeded superadmin (`yarn db:seed`).
 
 ---
 
-
-
 ## 8. Database & migrations
-
 
 | Concern         | Detail                                                                 |
 | --------------- | ---------------------------------------------------------------------- |
@@ -293,13 +264,10 @@ tokens come from the seeded superadmin (`yarn db:seed`).
 | pgvector        | Extension + `reports.embedding vector(768)` + HNSW index in migration  |
 | Ignored columns | `@IgnoredColumn()` + generate script strips DROP/ADD for those columns |
 
-
 Local Compose publishes Postgres on host `5433` and Valkey on `6380`
 (defaults) so they do not clash with system installs.
 
 ---
-
-
 
 ## 9. Caching
 
@@ -308,8 +276,6 @@ cache settings both point at the same Valkey instance in local Compose
 (`localhost:6380` from the host; service name `valkey` inside Compose).
 
 ---
-
-
 
 ## 10. Docker & deployment
 
@@ -328,10 +294,7 @@ starts the stack on the server.
 
 ---
 
-
-
 ## 11. Testing & scripts
-
 
 | Script               | Purpose                                                |
 | -------------------- | ------------------------------------------------------ |
@@ -341,21 +304,17 @@ starts the stack on the server.
 | `yarn migration:run` | Apply migrations                                       |
 | `yarn db:seed`       | Seed INTERNAL superadmin                               |
 
-
 Report coverage focuses on AI normalization/fallback, duplicate thresholding,
 stats, the create pipeline, and the controller layer.
 
 ---
-
-
 
 ## 12. Design notes (current codebase)
 
 - No separate `AdminGuard` or `AUTH_ENABLED` flag — admin = missing `@Public()`
   - global JWT guard; login is INTERNAL-only.
 - Event/email/PDF helper modules from the boilerplate scaffold are **not** part
-of this app (removed); helpers are bcrypt + JWT only.
+  of this app (removed); helpers are bcrypt + JWT only.
 - Swagger remains available at `/docs` in all environments (production disable is
-not active).
+  not active).
 - Interactive API contract: [API.md](./API.md) and Swagger UI.
-

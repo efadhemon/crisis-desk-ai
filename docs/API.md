@@ -292,10 +292,10 @@ Error `401`: invalid credentials or account not found.
 
 Related auth routes (same module):
 
-| Method | Endpoint | Auth | Purpose |
-| ------ | -------- | ---- | ------- |
-| `POST` | `/api/auth/refresh-token` | public | Re-issue tokens from a refresh JWT |
-| `PATCH` | `/api/auth/change-password` | JWT | Change password and re-login |
+| Method  | Endpoint                    | Auth   | Purpose                            |
+| ------- | --------------------------- | ------ | ---------------------------------- |
+| `POST`  | `/api/auth/refresh-token`   | public | Re-issue tokens from a refresh JWT |
+| `PATCH` | `/api/auth/change-password` | JWT    | Change password and re-login       |
 
 ---
 
