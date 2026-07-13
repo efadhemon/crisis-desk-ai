@@ -127,13 +127,13 @@ function createBaseDocumentBuilder() {
 export function setupSwagger(app: INestApplication): void {
   const logger = new Logger('SwaggerSetup');
 
-  // Only enable Swagger in non-production environments by default
-  const enableSwagger = !ENV.isProduction;
+  // // Only enable Swagger in non-production environments by default
+  // const enableSwagger = !ENV.isProduction;
 
-  if (!enableSwagger) {
-    logger.log('Swagger documentation is disabled in production');
-    return;
-  }
+  // if (!enableSwagger) {
+  //   logger.log('Swagger documentation is disabled in production');
+  //   return;
+  // }
 
   logger.log('Setting up Swagger documentation...');
 
