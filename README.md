@@ -45,39 +45,111 @@ Report submission pipeline:
 ## Prerequisites
 
 - Node.js `22.x` (see `.nvmrc`)
-- PostgreSQL 14+ **with the `vector` extension available** (use the
-  `pgvector/pgvector` image or a managed provider that supports pgvector)
-- Redis / Valkey (used by the platform's cache & queue modules)
+- Docker + Docker Compose (for Postgres/pgvector and Redis)
 - A Gemini API key (`GEMINI_API_KEY`)
 
-## Quick start (Docker — recommended)
+## Quick start (local development — recommended)
 
-The compose file is fully self-contained: it provisions pgvector Postgres,
-Redis, and the API together, and the container entrypoint runs migrations, seeds
-base data, and starts the app.
+Run **Postgres + Redis in Docker**, and the API on the host with `yarn dev`
+(hot reload).
 
-The API service loads its configuration from a file in `environments/` via
-`env_file`. Put your `GEMINI_API_KEY` (and any other config) in
-`environments/development.env`, then:
+### 1. Configure environment
 
 ```shell
+cp environments/example.env environments/development.env
+```
+
+Edit `environments/development.env` and set at least:
+
+- `GEMINI_API_KEY`
+- `JWT_SECRET`
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+
+Point DB and Redis at the Compose-published host ports:
+
+```env
+DB_TYPE=postgres
+DB_HOST=localhost
+DB_PORT=5433
+DB_USERNAME=crisisdesk
+DB_PASSWORD=crisisdesk
+DB_DATABASE=crisis-desk-ai
+DB_LOGGING=false
+DB_SSL_MODE=false
+
+QUEUE_HOST=localhost
+QUEUE_PORT=6380
+QUEUE_PASSWORD=crisisdesk
+QUEUE_USERNAME=default
+
+CACHE_STORE_HOST=localhost
+CACHE_STORE_PORT=6380
+CACHE_STORE_PASSWORD=crisisdesk
+CACHE_STORE_USERNAME=default
+CACHE_TTL=60
+```
+
+> Compose exposes a single Redis instance on host port `6380`. Use that same
+> host/port/password for both queue and cache settings when developing locally.
+
+### 2. Start Postgres + Redis
+
+```shell
+docker compose up db redis -d
+```
+
+| Service  | Host port | Default credentials                         |
+| -------- | --------- | ------------------------------------------- |
+| Postgres | `5433`    | user/pass `crisisdesk`, db `crisis-desk-ai` |
+| Redis    | `6380`    | password `crisisdesk`                       |
+
+Useful commands:
+
+```shell
+docker compose ps
+docker compose logs -f db redis
+docker compose stop db redis    # stop infra
+docker compose down             # stop + remove containers (DB volume is kept)
+```
+
+Override ports/credentials if needed:
+
+```shell
+DB_PORT_HOST=5544 REDIS_PORT_HOST=6390 REDIS_PASSWORD=secret \
+  DB_USERNAME=crisisdesk DB_PASSWORD=crisisdesk DB_DATABASE=crisis-desk-ai \
+  docker compose up db redis -d
+```
+
+### 3. Install, migrate, and run the API
+
+```shell
+nvm use            # Node 22
+yarn install
+yarn migration:run # creates reports table + pgvector column/index
+yarn db:seed       # optional — seeds admin/super-admin user
+yarn dev           # NestJS watch mode
+```
+
+- API base: `http://localhost:5000/api` (or your `API_PREFIX`)
+- Swagger UI: `http://localhost:5000/docs`
+
+## Full stack with Docker Compose
+
+Run Postgres, Redis, **and** the API all in containers:
+
+```shell
+# put GEMINI_API_KEY (and other config) in environments/development.env first
 docker compose up --build                       # uses environments/development.env
 NODE_ENV=production docker compose up --build    # uses environments/production.env
 NODE_ENV=staging    docker compose up --build    # uses environments/staging.env
 ```
 
-`development.env` ships with working defaults; `production.env` and
-`staging.env` are templates — fill in `GEMINI_API_KEY`, `JWT_SECRET`, and admin
-credentials before using them. The database and Redis connection settings in
-these files are automatically overridden by compose to reach the internal `db`
-and `redis` services (their `localhost:5433/6380` values are only for running
-the app directly on the host).
+Compose overrides `DB_HOST` / Redis hosts inside the `app` container so the API
+reaches the internal `db` and `redis` services. The `localhost:5433/6380` values
+in your env file are only for host-based `yarn dev`.
 
 - API base: `http://localhost:5000/api`
 - Swagger UI: `http://localhost:5000/docs`
-
-Host ports default to **non-standard values** so they never clash with a
-globally installed Postgres (`5432`) or Redis (`6379`):
 
 | Service  | Host port (default) | Override var      |
 | -------- | ------------------- | ----------------- |
@@ -85,31 +157,13 @@ globally installed Postgres (`5432`) or Redis (`6379`):
 | Postgres | `5433`              | `DB_PORT_HOST`    |
 | Redis    | `6380`              | `REDIS_PORT_HOST` |
 
-Inside the compose network the services still use their standard ports
-(`db:5432`, `redis:6379`); only the published host ports change. Override
-anything inline, e.g.:
-
 ```shell
 APP_PORT=8080 DB_PORT_HOST=5544 REDIS_PORT_HOST=6390 docker compose up --build
 ```
 
-App-level config (Gemini, JWT, admin, rate limits, etc.) comes from the selected
-`environments/<NODE_ENV>.env` file. Infrastructure wiring is controlled by
-compose variables with sensible defaults: `DB_USERNAME`, `DB_PASSWORD`,
-`DB_DATABASE`, `REDIS_PASSWORD` (these keep the app and the `db`/`redis`
-containers in sync regardless of the env file).
-
-## Quick start (local)
-
-```shell
-nvm use            # Node 22
-yarn install
-# 1) Configure environments/development.env (DB creds + GEMINI_API_KEY)
-# 2) Ensure Postgres (with pgvector) and Redis are running
-yarn build
-yarn migration:run # creates the reports table + pgvector column/index
-yarn dev           # start in watch mode (or: yarn start)
-```
+App-level config (Gemini, JWT, admin, rate limits, etc.) comes from
+`environments/<NODE_ENV>.env`. Infrastructure credentials can also be set via
+`DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, and `REDIS_PASSWORD`.
 
 ## Environment variables
 

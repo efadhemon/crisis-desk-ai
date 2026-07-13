@@ -35,14 +35,6 @@ export const ENV = {
     skipSecurity: toBool(process.env.SKIP_SECURITY),
   },
 
-  observability: {
-    logFolder: process.env.LOG_FOLDER,
-    logToConsole: toBool(process.env.LOG_TO_CONSOLE),
-    enabled: toBool(process.env.OBSERVABILITY_ENABLED),
-    otelExporterOtlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-    otelExporterOtlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
-  },
-
   jwt: {
     secret: process.env.JWT_SECRET,
     saltRound: toNumber(process.env.JWT_SALT_ROUNDS),
