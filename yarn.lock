@@ -5729,11 +5729,6 @@ ora@5.4.1:
     strip-ansi "^6.0.0"
     wcwidth "^1.0.1"
 
-otp-without-db@1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/otp-without-db/-/otp-without-db-1.0.6.tgz#72335080536f31aabf41f77e671b7c7a01a7102d"
-  integrity sha512-cPqPj1LYQ0ln7dECALC+pe2WXODskLCrCWVlZSrXVPBCsgjOBBD4mLTkLccTb1zK74QaCHZFnZzcNSk29UnLVw==
-
 p-limit@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-2.3.0.tgz#3dd33c647a214fdfffd835933eb086da0dc21db1"

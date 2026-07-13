@@ -81,7 +81,6 @@
     "nestjs-cls": "6.2.1",
     "node-cache": "5.1.2",
     "nodemailer": "8.0.10",
-    "otp-without-db": "1.0.6",
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
     "passport-local": "1.0.0",

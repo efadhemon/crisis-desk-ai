@@ -16,7 +16,7 @@ export class UserCreateDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'Zahid',
+    example: 'Emon',
   })
   @IsNotEmpty()
   @IsString()
@@ -25,7 +25,7 @@ export class UserCreateDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'Hassan',
+    example: 'Hossain',
   })
   @IsOptional()
   @IsString()
@@ -34,7 +34,7 @@ export class UserCreateDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'user@wh.com',
+    example: 'user@crisisdesk.com',
   })
   @IsNotEmpty()
   @IsString()
@@ -43,7 +43,7 @@ export class UserCreateDTO {
   @ApiProperty({
     type: String,
     required: false,
-    example: '01612345678',
+    example: '01998200160',
   })
   @IsOptional()
   @IsString()
@@ -57,13 +57,4 @@ export class UserCreateDTO {
   @IsNotEmpty()
   @IsString()
   readonly password?: string;
-
-  @ApiProperty({
-    type: String,
-    required: false,
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsOptional()
-  @IsString()
-  assessmentDecisionId?: string;
 }

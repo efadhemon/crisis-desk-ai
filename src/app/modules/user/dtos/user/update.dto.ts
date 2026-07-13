@@ -1,39 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
-
-export class UserRolesUpdateDTO {
-  @ApiProperty({
-    type: String,
-    required: true,
-    example: '7efe629c-3e94-4fa7-a26d-7c5216e41d93',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  readonly role!: any;
-
-  @ApiProperty({
-    type: Boolean,
-    required: false,
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  readonly isDeleted!: boolean;
-}
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UserUpdateDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'Zahid',
+    example: 'Emon',
   })
   @IsOptional()
   @IsString()
@@ -42,7 +14,7 @@ export class UserUpdateDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'Hassan',
+    example: 'Hossain',
   })
   @IsOptional()
   @IsString()
@@ -51,7 +23,7 @@ export class UserUpdateDTO {
   @ApiProperty({
     type: String,
     required: false,
-    example: '01636476123',
+    example: '01998200160',
   })
   @IsOptional()
   @IsString()
@@ -74,22 +46,4 @@ export class UserUpdateDTO {
   @IsOptional()
   @IsBoolean()
   readonly isActive!: boolean;
-
-  @ApiProperty({
-    type: [UserRolesUpdateDTO],
-    required: false,
-    example: [
-      {
-        role: '7efe629c-3e94-4fa7-a26d-7c5216e41d93',
-      },
-      {
-        role: '7efe629c-3e94-4fa7-a26d-7c5216e41d93',
-        isDeleted: true,
-      },
-    ],
-  })
-  @ValidateNested()
-  @Type(() => UserRolesUpdateDTO)
-  @IsOptional()
-  readonly roles!: UserRolesUpdateDTO[];
 }

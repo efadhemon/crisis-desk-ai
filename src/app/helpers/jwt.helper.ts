@@ -1,7 +1,6 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ENV } from '@src/env';
 import { sign, verify } from 'jsonwebtoken';
-import * as OtpUtil from 'otp-without-db';
 import { GenericObject } from '../types';
 
 @Injectable()
@@ -63,19 +62,6 @@ export class JWTHelper {
       },
     };
     return this.sign(configAccess.payload, configAccess.options);
-  }
-
-  public generateOtpHash(
-    identifier: string,
-    otp: number,
-    expiresInMin?: number,
-    secret?: string,
-  ): string {
-    return OtpUtil.createNewOTP(identifier, otp, secret ?? ENV.jwt.secret, expiresInMin || 5);
-  }
-
-  public verifyOtpHash(identifier: string, otp: number, otpHash: string, secret?: string): boolean {
-    return OtpUtil.verifyOTP(identifier, otp, otpHash, secret ?? ENV.jwt.secret);
   }
 
   public verifyRefreshToken(token: string): GenericObject {

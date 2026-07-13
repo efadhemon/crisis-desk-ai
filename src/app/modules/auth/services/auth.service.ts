@@ -8,7 +8,7 @@ import { BcryptHelper } from '@src/app/helpers';
 import { IAuthUser, ILginResponse } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
 import { ENV } from '@src/env';
-import { gen6digitOTP, identifyIdentifier } from '@src/shared';
+import { identifyIdentifier } from '@src/shared';
 import {
   commitTransaction,
   rollbackTransaction,
@@ -20,11 +20,6 @@ import { ENUM_AUTH_PROVIDERS, ENUM_USER_TYPES } from '../../user/enums';
 import { LoginDTO } from '../dtos/login.dto';
 import { RefreshTokenDTO } from '../dtos/refreshToken.dto';
 import { RegisterDTO } from '../dtos/register.dto';
-import { ResetPasswordDTO } from '../dtos/resetPassword.dto';
-import { SendOtpDTO } from '../dtos/sendOtp.dto';
-import { VerifyOtpDTO } from '../dtos/verifyOtp.dto';
-import { VerifyResetPasswordDTO } from '../dtos/verifyResetPassword.dto';
-import { ENUM_VERIFICATION_TYPES } from '../enums';
 import { JWTHelper } from './../../../helpers/jwt.helper';
 import { UserService } from './../../user/services/user.service';
 import { ChangePasswordDTO } from './../dtos/changePassword.dto';
@@ -130,89 +125,6 @@ export class AuthService {
     return user;
   }
 
-  async sendOtp(payload: SendOtpDTO): Promise<SuccessResponse> {
-    const response = await this.otpSentForVerification({
-      verificationType: payload?.verificationType,
-      identifier: payload?.identifier,
-    });
-
-    return new SuccessResponse(`OTP sent to ${response.identifier}.`, response);
-  }
-
-  async verifyOtp(payload: VerifyOtpDTO): Promise<SuccessResponse<ILginResponse>> {
-    const { identifier, otp, hash } = payload;
-
-    const whereConditions = {};
-    const identify = identifyIdentifier(identifier);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.findOne({
-      where: {
-        ...whereConditions,
-      },
-    });
-    if (!user) {
-      throw new UnauthorizedException('Account not found with this identifier');
-    }
-
-    const isOtpVerified = this.jwtHelper.verifyOtpHash(identifier, otp, hash);
-
-    if (!isOtpVerified) {
-      throw new BadRequestException('Invalid OTP');
-    }
-
-    await this.userService.repo.update(user.id, { isVerified: true });
-
-    return this.loginResponse(user.id, {
-      message: 'Account verified successfully',
-      remember: payload.remember,
-      rememberDays: payload.rememberDays,
-    });
-  }
-
-  async resetPassword(payload: ResetPasswordDTO): Promise<SuccessResponse> {
-    const response = await this.otpSentForVerification({
-      verificationType: ENUM_VERIFICATION_TYPES.RESET_PASSWORD,
-      identifier: payload?.identifier,
-    });
-    return new SuccessResponse(`OTP sent to ${response.identifier}.`, response);
-  }
-
-  async verifyResetPassword(
-    payload: VerifyResetPasswordDTO,
-  ): Promise<SuccessResponse<ILginResponse>> {
-    const { identifier, otp, newPassword, hash } = payload;
-
-    const whereConditions = {};
-    const identify = identifyIdentifier(identifier);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.isExist({
-      ...whereConditions,
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Account not found with this identifier');
-    }
-
-    const isOtpVerified = this.jwtHelper.verifyOtpHash(identifier, otp, hash);
-
-    if (!isOtpVerified) {
-      throw new BadRequestException('Invalid OTP');
-    }
-
-    await this.userService.repo.update(user.id, {
-      password: newPassword,
-      isVerified: true,
-    });
-
-    return this.loginResponse(user.id, {
-      message: 'Password reset successfully.',
-      remember: payload.remember,
-      rememberDays: payload.rememberDays,
-    });
-  }
-
   async changePassword(
     payload: ChangePasswordDTO,
     authUser: IAuthUser,
@@ -224,6 +136,7 @@ export class AuthService {
       select: {
         id: true,
         phoneNumber: true,
+        password: true,
       },
     });
 
@@ -260,7 +173,7 @@ export class AuthService {
       whereConditions.push({ [identify.key]: identify.value });
 
       const isExist = await queryRunner.manager.findOne(User, {
-        where: whereConditions.length ? whereConditions : undefined, // Avoid invalid queries
+        where: whereConditions.length ? whereConditions : undefined,
         withDeleted: true,
       });
 
@@ -273,7 +186,6 @@ export class AuthService {
       } else if (isExist && identify.key === 'phoneNumber') {
         throw new ConflictException('Already registered via this phone number. Try login');
       } else if (isExist && identify.key === 'username') {
-        // Because username is not supported while registering
         throw new ConflictException('Invalid identifier');
       }
 
@@ -282,20 +194,14 @@ export class AuthService {
         firstName: payload.firstName,
         lastName: payload.lastName,
         password: payload.password,
+        isVerified: true,
         [identify.key]: identify.value,
       };
 
-      // Create User
       await queryRunner.manager.save(User, payloadForNewUser);
-
       await commitTransaction(queryRunner);
 
-      const response = await this.otpSentForVerification({
-        verificationType: ENUM_VERIFICATION_TYPES.SIGN_UP,
-        identifier: payload?.identifier,
-      });
-
-      return new SuccessResponse('User Registered Successfully', response);
+      return new SuccessResponse('User Registered Successfully');
     } catch (error) {
       await rollbackTransaction(queryRunner);
       console.error('🚀 ~ AuthService ~ registerUser ~ error:', error);
@@ -347,15 +253,7 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
-      const response = await this.otpSentForVerification({
-        verificationType: ENUM_VERIFICATION_TYPES.SIGN_UP,
-        identifier: payload.identifier,
-      });
-
-      return new SuccessResponse('User is not verified...! Please Verify First For Login', {
-        ...response,
-        isVerified: false,
-      });
+      throw new UnauthorizedException('User is not verified. Please contact support.');
     }
 
     return this.loginResponse(user.id, {
@@ -384,56 +282,5 @@ export class AuthService {
       roles: [],
       permissions: [],
     };
-  }
-
-  async otpSentForVerification(payload: {
-    verificationType: ENUM_VERIFICATION_TYPES;
-    identifier?: string;
-  }): Promise<{ message: string; identifier: string; hash: string; otp: number }> {
-    const { verificationType, identifier } = payload;
-
-    const whereConditions = {};
-    const identify = identifyIdentifier(identifier);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.isExist({
-      ...whereConditions,
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Account not found with this identifier');
-    }
-
-    const sentTo = { identifier, isEmail: false, isPhoneNumber: false };
-    if (identify?.key === 'email') {
-      sentTo.isEmail = true;
-    } else if (identify.key === 'phoneNumber') {
-      sentTo.isPhoneNumber = true;
-    } else {
-      throw new BadRequestException(
-        'Identifier should be email or phone number for verification !',
-      );
-    }
-
-    const expiresIn = 5;
-    const otp = gen6digitOTP();
-    const hash = this.jwtHelper.generateOtpHash(identifier, otp, expiresIn);
-
-    const messageType =
-      verificationType === ENUM_VERIFICATION_TYPES.SIGN_UP ? 'Sign Up' : 'Reset Password';
-    const channel = sentTo.isEmail ? 'email' : 'phone number';
-    const message = `Your OTP for ${messageType} has been generated. It will expire in ${expiresIn} minutes.`;
-
-    if (!ENV.isProduction) {
-      console.info(`[dev] OTP for ${channel} ${identifier}: ${otp}`);
-    }
-
-    const response = {
-      message,
-      identifier: identifier,
-      hash,
-      otp: ENV.isProduction ? null : otp,
-    };
-    return response;
   }
 }

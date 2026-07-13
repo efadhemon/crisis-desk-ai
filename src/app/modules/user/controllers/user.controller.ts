@@ -1,11 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '@src/app/decorators';
 import { IAuthUser } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
-import { FindOptionsRelations, In } from 'typeorm';
+import { FindOptionsRelations } from 'typeorm';
 import { UserCreateDTO } from '../dtos/user/create.dto';
-import { UserFilterBulkByIdsDTO, UserFilterDTO } from '../dtos/user/filter.dto';
+import { UserFilterDTO } from '../dtos/user/filter.dto';
 import { UserUpdateDTO } from '../dtos/user/update.dto';
 import { User } from '../entities/user.entity';
 import { UserService } from '../services/user.service';
@@ -28,11 +28,6 @@ export class UserController {
     return this.service.findByIdBase(authUser.id);
   }
 
-  @Post('bulk-by-ids')
-  async findBulkByIds(@Body() payload: UserFilterBulkByIdsDTO): Promise<SuccessResponse<User[]>> {
-    return this.service.findAllBase({ id: In(payload.ids) as any }, { relations: this.RELATIONS });
-  }
-
   @Get(':id')
   async findById(@Param('id') id: string): Promise<User> {
     return this.service.findByIdBase(id, { relations: this.RELATIONS });
@@ -46,10 +41,5 @@ export class UserController {
   @Patch(':id')
   async updateOne(@Param('id') id: string, @Body() body: UserUpdateDTO): Promise<User> {
     return this.service.updateUser(id, body, this.RELATIONS);
-  }
-
-  @Delete(':id')
-  async deleteOne(@Param('id') id: string | string): Promise<SuccessResponse> {
-    return this.service.deleteOneBase(id as any);
   }
 }

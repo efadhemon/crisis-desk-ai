@@ -76,9 +76,6 @@ export function isArrayHasSameObject<T>(arr: T[], propertyKey: keyof T): boolean
 
   return true;
 }
-export const gen6digitOTP = (): number => {
-  return Math.floor(100000 + Math.random() * 900000);
-};
 
 export const generateFilename = (file): string => {
   return `${Date.now()}${path.extname(file.originalname)}`;

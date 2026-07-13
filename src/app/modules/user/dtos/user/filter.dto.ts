@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseFilterDTO } from '@src/app/base/baseFilter.dto';
 import { Transform } from 'class-transformer';
-import { IsArray, IsBooleanString, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsBooleanString, IsEnum, IsOptional } from 'class-validator';
 import { ENUM_USER_TYPES } from '../../enums';
 
 export class UserFilterDTO extends BaseFilterDTO {
@@ -37,16 +37,4 @@ export class UserFilterDTO extends BaseFilterDTO {
     }
   })
   roles!: string[];
-}
-
-export class UserFilterBulkByIdsDTO {
-  @ApiProperty({
-    type: [String],
-    description: `id array ['uuid','uuid']`,
-    example: ['123e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174001'],
-    required: true,
-  })
-  @IsNotEmpty()
-  @IsArray()
-  ids!: string[];
 }

@@ -8,10 +8,6 @@ import { SuccessResponse } from '@src/app/types';
 import { ChangePasswordDTO } from '../dtos/changePassword.dto';
 import { LoginDTO } from '../dtos/login.dto';
 import { RefreshTokenDTO } from '../dtos/refreshToken.dto';
-import { ResetPasswordDTO } from '../dtos/resetPassword.dto';
-import { SendOtpDTO } from '../dtos/sendOtp.dto';
-import { VerifyOtpDTO } from '../dtos/verifyOtp.dto';
-import { VerifyResetPasswordDTO } from '../dtos/verifyResetPassword.dto';
 import { AuthService } from '../services/auth.service';
 
 @ApiTags('Auth')
@@ -30,32 +26,6 @@ export class AuthController {
   @Post('refresh-token')
   async refreshToken(@Body() body: RefreshTokenDTO): Promise<SuccessResponse<ILginResponse>> {
     return this.service.refreshToken(body);
-  }
-
-  @Public()
-  @Post('otp-send')
-  async sendB2bUserOtp(@Body() body: SendOtpDTO): Promise<SuccessResponse> {
-    return this.service.sendOtp(body);
-  }
-
-  @Public()
-  @Post('otp-verify')
-  async verifyOtp(@Body() body: VerifyOtpDTO): Promise<SuccessResponse<ILginResponse>> {
-    return this.service.verifyOtp(body);
-  }
-
-  @Public()
-  @Post('reset-password-request')
-  async resetPassword(@Body() body: ResetPasswordDTO): Promise<SuccessResponse> {
-    return this.service.resetPassword(body);
-  }
-
-  @Public()
-  @Post('reset-password-verify')
-  async verifyPassword(
-    @Body() body: VerifyResetPasswordDTO,
-  ): Promise<SuccessResponse<ILginResponse>> {
-    return this.service.verifyResetPassword(body);
   }
 
   @Patch('change-password')

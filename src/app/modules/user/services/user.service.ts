@@ -62,13 +62,11 @@ export class UserService extends BaseService<User> {
   ): Promise<User> {
     await this.isExist({ id: id as any });
 
-    const { roles: _roles, ...userData } = payload;
-
     const queryRunner = await startTransaction(this.dataSource);
 
     try {
-      if (isNotEmptyObject(userData)) {
-        await queryRunner.manager.update(User, { id }, userData);
+      if (isNotEmptyObject(payload)) {
+        await queryRunner.manager.update(User, { id }, payload);
       }
 
       await commitTransaction(queryRunner);
