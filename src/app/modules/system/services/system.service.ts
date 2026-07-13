@@ -19,7 +19,7 @@ export class SystemService {
     return {
       success: true,
       statusCode: 200,
-      message: 'WAGE HATE API is working',
+      message: 'API is working',
       data: ENV.api.API_VERSION,
     };
   }

@@ -14,7 +14,7 @@ tests, and Docker/deploy setup covering every bonus.
 ## Delivery checklist
 
 - [x] **env-config** — Add gemini/auth/admin/duplicate config to `src/env.ts` and `environments/example.env` + `development.env`; set `API_PREFIX=api`.
-- [x] **enums-entity** — Create report enums and `Report` entity (AutoEntity, BaseEntity, statics) following `wagehat-typeorm-entities` conventions.
+- [x] **enums-entity** — Create report enums and `Report` entity (AutoEntity, BaseEntity, statics) following `typeorm-entities` conventions.
 - [x] **pgvector-migration** — Hand-write migration: `CREATE EXTENSION vector`, reports table, `embedding vector(768)` column, index.
 - [x] **dtos** — Create create-report, update-status, and filter DTOs (extends `BaseFilterDTO`) with class-validator + `@ApiProperty`.
 - [x] **ai-service** — Implement `AiService` with Gemini structured JSON classification/summarization, enum validation, bn/en handling, fallback.

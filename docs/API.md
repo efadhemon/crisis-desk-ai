@@ -240,7 +240,7 @@ admin-gated report endpoints. Credentials come from the seeded user
 Request body:
 
 ```json
-{ "identifier": "superadmin@wagehat.com", "password": "123456" }
+{ "identifier": "efadhemon@gmail.com", "password": "123456" }
 ```
 
 Response `200`:
@@ -257,7 +257,7 @@ Response `200`:
     "user": {
       "id": "...",
       "userType": "internal",
-      "email": "superadmin@wagehat.com",
+      "email": "efadhemon@gmail.com",
       "fullName": "Super Admin",
       "phoneNumber": null,
       "authProvider": "system",

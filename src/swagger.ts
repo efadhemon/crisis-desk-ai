@@ -66,10 +66,6 @@ const swaggerUIConfig: SwaggerCustomOptions = {
  */
 const DOC_CATEGORIES = {
   APP: 'app',
-  WEB: 'web',
-  INTERNAL: 'internal',
-  EMPLOYER: 'employer',
-  PROVIDER: 'provider',
 };
 
 /**
@@ -153,10 +149,6 @@ export function setupSwagger(app: INestApplication): void {
 
   // Create filtered documentation for different platforms
   const appDoc = filterApiRoutes(document, DOC_CATEGORIES.APP);
-  const webDoc = filterApiRoutes(document, DOC_CATEGORIES.WEB);
-  const internalDoc = filterApiRoutes(document, DOC_CATEGORIES.INTERNAL);
-  const employerDoc = filterApiRoutes(document, DOC_CATEGORIES.EMPLOYER);
-  const providerDoc = filterApiRoutes(document, DOC_CATEGORIES.PROVIDER);
 
   // Base documentation path
   const baseDocPath = '/docs';
@@ -172,34 +164,10 @@ export function setupSwagger(app: INestApplication): void {
     customSiteTitle: 'WageHat API - Mobile App',
   });
 
-  SwaggerModule.setup(`${baseDocPath}/web`, app, webDoc, {
-    ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Web Application',
-  });
-
-  SwaggerModule.setup(`${baseDocPath}/internal`, app, internalDoc, {
-    ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Internal Services',
-  });
-
-  SwaggerModule.setup(`${baseDocPath}/employer`, app, employerDoc, {
-    ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Employer Portal',
-  });
-
-  SwaggerModule.setup(`${baseDocPath}/provider`, app, providerDoc, {
-    ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Provider Portal',
-  });
-
   // Log available documentation URLs
   logger.log('Swagger documentation is available at:');
   logger.log(`   Complete API: ${baseDocPath}`);
   logger.log(`   Mobile App: ${baseDocPath}/app`);
-  logger.log(`   Web App: ${baseDocPath}/web`);
-  logger.log(`   Internal: ${baseDocPath}/internal`);
-  logger.log(`   Employer: ${baseDocPath}/employer`);
-  logger.log(`   Provider: ${baseDocPath}/provider`);
 
   // Export OpenAPI JSON (useful for CI/CD, testing, and external tools)
   if (process.env.EXPORT_OPENAPI_JSON === 'true') {

@@ -5,7 +5,7 @@ export class RegisterDTO {
   @ApiProperty({
     type: String,
     required: true,
-    example: 'superadmin@wagehat.com',
+    example: 'efadhemon@gmail.com',
   })
   @IsNotEmpty()
   @IsString()

@@ -39,7 +39,7 @@ async function bootstrap(): Promise<void> {
   await app.listen(ENV.port);
 
   console.warn(
-    `\n\nWAGE API ===>>\n\nNODE_VERSION: v22.12.0\nNODE_ENV: ${ENV.env}\nRUNNING_ON: ${await app.getUrl()}\nAPI_DOCUMENTATION: ${await app.getUrl()}/docs\n\n`,
+    `\n\nAPI ===>>\n\nNODE_VERSION: v22.12.0\nNODE_ENV: ${ENV.env}\nRUNNING_ON: ${await app.getUrl()}\nAPI_DOCUMENTATION: ${await app.getUrl()}/docs\n\n`,
   );
 }
 bootstrap();
