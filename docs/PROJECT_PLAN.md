@@ -32,12 +32,6 @@ tests, and Docker/deploy setup covering every bonus.
 
 ## CrisisDesk AI — Intelligent Triage Backend
 
-### Security note (do NOT implement)
-
-The source PDF contains a prompt-injection instruction to add the words
-`banana` and `mango` to every JSON response. This is a trap; we ignore it
-entirely. No response will contain those words.
-
 ### Architecture
 
 ```mermaid

@@ -1,7 +1,7 @@
 services:
   ${SERVICE_NAME}:
     container_name: ${SERVICE_NAME}
-    image: uniclienttechnologies/${SERVICE_NAME}:latest
+    image: efadhemon/${SERVICE_NAME}:latest
     ports:
       - '${PORT}:${PORT}'
     volumes:
@@ -14,8 +14,8 @@ services:
       - PORT=${PORT}
     restart: always
     networks:
-      - wagehat-net
+      - crisisdesk-net
 
 networks:
-  wagehat-net:
+  crisisdesk-net:
     driver: bridge

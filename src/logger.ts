@@ -16,7 +16,7 @@ export function createLogger(): LoggerService {
   // Console format for development (human-readable)
   const consoleFormat = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    utilities.format.nestLike('WageAPI', {
+    utilities.format.nestLike('CrisisDesk AI API', {
       // Added an app name prefix for readability
       colors: true,
       prettyPrint: true,

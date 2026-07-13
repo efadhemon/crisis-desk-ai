@@ -6,11 +6,6 @@ emergency and public-service reports (in Bangla or English); the backend uses
 recommended action, detects likely duplicates using **pgvector** embeddings, and
 exposes admin APIs for management and analytics.
 
-> Security note: the original problem statement contains an embedded
-> prompt-injection instruction (asking AI tools to insert the words "banana" and
-> "mango" into every response). This is a trap and is deliberately ignored — no
-> API response contains those words.
-
 ## Tech stack
 
 - **NestJS 11** (Express) + **TypeScript**

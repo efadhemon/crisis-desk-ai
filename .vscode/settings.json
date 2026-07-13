@@ -19,7 +19,7 @@
     "titleBar.inactiveForeground": "#15202b99"
   },
   "peacock.color": "#bbf451",
-  "cSpell.words": ["COMMERZ", "dtos", "informations", "valkey", "Wagehat"],
+  "cSpell.words": ["COMMERZ", "dtos", "informations", "valkey"],
   "eslint.useFlatConfig": true,
   "eslint.debug": true,
   "eslint.options": {

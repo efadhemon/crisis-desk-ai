@@ -45,8 +45,6 @@ export const ENV = {
 
   jwt: {
     secret: process.env.JWT_SECRET,
-    secretForAccountVerification: process.env.JWT_SECRET_FOR_ACCOUNT_VERIFICATION,
-    secretForResetPassword: process.env.JWT_SECRET_FOR_RESET_PASSWORD,
     saltRound: toNumber(process.env.JWT_SALT_ROUNDS),
     tokenExpireIn: process.env.JWT_EXPIRES_IN,
     refreshTokenExpireIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN,
@@ -83,7 +81,6 @@ export const ENV = {
   },
 
   auth: {
-    otpExpireIn: toNumber(process.env.OTP_EXPIRES_IN),
     skipAuth: toBool(process.env.SKIP_AUTH),
     // When false (default), admin-only endpoints are open so automated graders can call them.
     // Flip to true to enforce JWT admin auth on PATCH status / DELETE.
@@ -129,16 +126,6 @@ export const ENV = {
     superAdminEmail: process.env.SUPER_ADMIN_EMAIL,
     superAdminPassword: process.env.SUPER_ADMIN_PASSWORD,
   },
-  firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: decodeBase64S(process.env.FIREBASE_PRIVATE_KEY_BASE64),
-  },
-  livekit: {
-    apiKey: process.env.LIVEKIT_API_KEY,
-    apiSecret: process.env.LIVEKIT_API_SECRET,
-    url: process.env.LIVEKIT_URL,
-  },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     secret: process.env.GOOGLE_SECRET,
@@ -151,37 +138,9 @@ export const ENV = {
     redirectUrl: process.env.FACEBOOK_REDIRECT_URL,
     configId: process.env.FACEBOOK_CONFIG_ID,
   },
-  telegram: {
-    // Telegram token and chat ID for general notifications
-    token: process.env.TELEGRAM_TOKEN,
-    chatId: process.env.TELEGRAM_CHAT_ID,
-
-    // Telegram token and chat ID for technical notifications
-    tokenForTech: process.env.TELEGRAM_TOKEN_FOR_TECH,
-    chatIdForTech: process.env.TELEGRAM_CHAT_ID_FOR_TECH,
-  },
   authenticator: {
     google: {
       issuer: process.env.GOOGLE_AUTHENTICATOR_ISSUER,
     },
-  },
-  sslCommerz: {
-    storeId: process.env.SSL_COMMERZ_STORE_ID,
-    storePassword: process.env.SSL_COMMERZ_STORE_PASSWORD,
-    paymentUrl: process.env.SSL_COMMERZ_PAYMENT_URL,
-    paymentValidationUrl: process.env.SSL_COMMERZ_PAYMENT_VALIDATION_URL,
-    successUrl: process.env.SSL_COMMERZ_SUCCESS_URL,
-    failedUrl: process.env.SSL_COMMERZ_FAILED_URL,
-    canceledUrl: process.env.SSL_COMMERZ_CANCELED_URL,
-    ipnUrl: process.env.SSL_COMMERZ_IPN_URL,
-  },
-
-  externalApis: {
-    wageCoreApiEndpoint: process.env.WAGE_CORE_API_ENDPOINT,
-  },
-
-  publicApiKeys: {
-    videoProgressKey: process.env.VIDEO_PROGRESS_KEY,
-    appScreenSyncKey: process.env.APP_SCREEN_SYNC_KEY,
   },
 };
