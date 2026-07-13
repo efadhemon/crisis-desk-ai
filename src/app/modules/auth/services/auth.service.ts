@@ -6,7 +6,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { BcryptHelper } from '@src/app/helpers';
-import { FileUploadHelper } from '@src/app/helpers/fileUpload.helper';
 import { IAuthUser, ILginResponse, IValidateResponse } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
 import { ENV } from '@src/env';
@@ -47,7 +46,6 @@ export class AuthService {
     private readonly http: HttpService,
     private readonly jwtHelper: JWTHelper,
     private readonly bcryptHelper: BcryptHelper,
-    private readonly fileUploadHelper: FileUploadHelper,
   ) {}
 
   async loginResponse(
@@ -597,17 +595,13 @@ export class AuthService {
       }
 
       if (!user) {
-        const avatarData = responseData?.picture?.data?.url
-          ? await this.fileUploadHelper.uploadFromUrl(responseData?.picture?.data?.url)
-          : null;
-
         const payloadForNewUser: User = {
           userType: payload.userType,
           firstName: responseData.first_name,
           lastName: responseData.last_name,
           fullName: responseData.name,
           email: responseData?.email,
-          avatar: avatarData.url,
+          avatar: responseData?.picture?.data?.url ?? null,
           authProvider: ENUM_AUTH_PROVIDERS.FACEBOOK,
           authProviderMetaInfo: {
             id: responseData.id,

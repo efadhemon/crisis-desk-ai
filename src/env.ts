@@ -105,23 +105,6 @@ export const ENV = {
     // Cosine similarity (0-1). Above this, a new report is flagged as a possible duplicate.
     similarityThreshold: Number(process.env.DUPLICATE_SIMILARITY_THRESHOLD) || 0.85,
   },
-  s3: {
-    region: process.env.S3_REGION,
-    endpoint: process.env.S3_ENDPOINT,
-    accessKey: process.env.S3_ACCESS_KEY,
-    secretKey: process.env.S3_SECRET_KEY,
-    bucket: process.env.S3_BUCKET,
-    cdnUrl: process.env.S3_CDN_URL,
-    rootFolder: process.env.S3_ROOT_FOLDER,
-  },
-  // Temporary S3 Storage old for delete old data from space don't remove it without any discussion
-  s3Old: {
-    region: process.env.S3_REGION_OLD,
-    endpoint: process.env.S3_ENDPOINT_OLD,
-    accessKey: process.env.S3_ACCESS_KEY_OLD,
-    secretKey: process.env.S3_SECRET_KEY_OLD,
-    bucket: process.env.S3_BUCKET_OLD,
-  },
   seedData: {
     superAdminEmail: process.env.SUPER_ADMIN_EMAIL,
     superAdminPassword: process.env.SUPER_ADMIN_PASSWORD,

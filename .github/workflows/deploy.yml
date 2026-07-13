@@ -1,13 +1,13 @@
-name: Wagehat Staging CI
+name: Deploy CI
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
 
 env:
-  NODE_ENV: staging
-  SERVICE_NAME: wagehat-stg
-  DEPLOY_DIRECTORY: '~/deploy/wagehat-stg'
+  NODE_ENV: production
+  SERVICE_NAME: crisisdesk-api
+  DEPLOY_DIRECTORY: '~/deploy/crisisdesk-api'
 
   DOCKER_USER: ${{ secrets.DOCKER_HUB_USER }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
