@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
@@ -6,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { BcryptHelper } from '@src/app/helpers';
-import { IAuthUser, ILginResponse, IValidateResponse } from '@src/app/interfaces';
+import { IAuthUser, ILginResponse } from '@src/app/interfaces';
 import { SuccessResponse } from '@src/app/types';
 import { ENV } from '@src/env';
 import { gen6digitOTP, identifyIdentifier } from '@src/shared';
@@ -15,22 +14,14 @@ import {
   rollbackTransaction,
   startTransaction,
 } from '@src/shared/utils/dborm.utils';
-import * as Crypto from 'crypto';
-import authenticator from 'otplib';
-import { toDataURL } from 'qrcode';
-import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { ENUM_AUTH_PROVIDERS, ENUM_USER_TYPES } from '../../user/enums';
-import { Authenticate2faDTO } from '../dtos/authenticate2fa.dto';
-import { FacebookAuthRequestDTO } from '../dtos/facebookAuthRequest.dto';
-import { GoogleAuthRequestDTO } from '../dtos/googleAuthRequest.dto';
 import { LoginDTO } from '../dtos/login.dto';
 import { RefreshTokenDTO } from '../dtos/refreshToken.dto';
 import { RegisterDTO } from '../dtos/register.dto';
 import { ResetPasswordDTO } from '../dtos/resetPassword.dto';
 import { SendOtpDTO } from '../dtos/sendOtp.dto';
-import { SocialAuthValidateDTO } from '../dtos/socialAuthValidate.dto';
 import { VerifyOtpDTO } from '../dtos/verifyOtp.dto';
 import { VerifyResetPasswordDTO } from '../dtos/verifyResetPassword.dto';
 import { ENUM_VERIFICATION_TYPES } from '../enums';
@@ -43,7 +34,6 @@ export class AuthService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
-    private readonly http: HttpService,
     private readonly jwtHelper: JWTHelper,
     private readonly bcryptHelper: BcryptHelper,
   ) {}
@@ -331,7 +321,6 @@ export class AuthService {
         password: true,
         isActive: true,
         isVerified: true,
-        isTwoFactorEnabled: true,
       },
     });
 
@@ -369,13 +358,6 @@ export class AuthService {
       });
     }
 
-    if (user?.isTwoFactorEnabled) {
-      return new SuccessResponse('Two Factor Authentication Required !!', {
-        identifier: payload.identifier,
-        isTwoFactorEnabled: true,
-      });
-    }
-
     return this.loginResponse(user.id, {
       remember: payload.remember,
       rememberDays: payload.rememberDays,
@@ -402,425 +384,6 @@ export class AuthService {
       roles: [],
       permissions: [],
     };
-  }
-
-  async googleAuthRequest(query: GoogleAuthRequestDTO & { role?: string }): Promise<string> {
-    const state = JSON.stringify({ provider: 'google', ...query });
-    const scopes = [
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ];
-    const authorizationUrl =
-      'https://accounts.google.com/o/oauth2/v2/auth' +
-      `?client_id=${ENV.google.clientId}` +
-      `&redirect_uri=${ENV.google.redirectUrl}` +
-      '&response_type=code' +
-      '&scope=' +
-      scopes.join(' ') +
-      '&state=' +
-      state;
-    return authorizationUrl;
-  }
-
-  async googleLogin(
-    userData: Record<string, any>,
-    state: string,
-  ): Promise<{
-    callBackUrl: string;
-  }> {
-    if (!userData) {
-      throw new BadRequestException('No user from google');
-    }
-    const additionalData = JSON.parse(state) as {
-      webRedirectUrl: string;
-      provider: string;
-      role?: string;
-    };
-    const isExist = await this.userService.findOne({
-      where: { email: userData.email },
-    });
-
-    if (!isExist) {
-      const queryRunner = await startTransaction(this.dataSource);
-      try {
-        const newUserData: Partial<User> = {
-          fullName: userData.fullName,
-          email: userData.email,
-          authProvider: ENUM_AUTH_PROVIDERS.GOOGLE,
-          password: Crypto.randomBytes(20).toString('hex'),
-          isVerified: true,
-        };
-        const createdUser = await queryRunner.manager.save(Object.assign(new User(), newUserData));
-
-        if (!createdUser) {
-          throw new BadRequestException('Cannot create user');
-        }
-        await commitTransaction(queryRunner);
-      } catch (error) {
-        console.error('🚀 ~ AuthService ~ error:', error);
-        await rollbackTransaction(queryRunner);
-      }
-    }
-
-    const newCreatedUser = await this.userService.findOne({
-      where: { email: userData.email },
-    });
-
-    if (!newCreatedUser) {
-      throw new BadRequestException('User not created');
-    }
-
-    const callBackUrl = `${additionalData.webRedirectUrl}?token=${userData?.accessToken}&provider=${additionalData.provider}`;
-
-    return {
-      callBackUrl,
-    };
-  }
-
-  async facebookAuthRequest(query: FacebookAuthRequestDTO & { role?: string }): Promise<string> {
-    const state = JSON.stringify({ provider: 'facebook', ...query });
-    const scopes = ['email'];
-    const authorizationUrl = `https://www.facebook.com/${ENV.facebook.apiVersion}/dialog/oauth?client_id=${
-      ENV.facebook.clientId
-    }&redirect_uri=${ENV.facebook.redirectUrl}&scope=${scopes.join(',')}&state=${state}&config_id=${
-      ENV.facebook.configId
-    }`;
-    // console.log('🚀 ~ AuthService ~ facebookAuthRequest ~ authorizationUrl:', authorizationUrl);
-    return authorizationUrl;
-  }
-
-  async facebookLogin(
-    userData: Record<string, any>,
-    state: string,
-  ): Promise<{
-    callBackUrl: string;
-  }> {
-    if (!userData) {
-      throw new BadRequestException('No user from facebook');
-    }
-    const additionalData = JSON.parse(state) as {
-      webRedirectUrl: string;
-      provider: string;
-      role?: string;
-    };
-    if (!userData?.email) {
-      throw new BadRequestException(
-        'Email is required, but your facebook account does not have it',
-      );
-      // userData.email = `${userData.providerIdentifier}@wagehat.com`;
-    }
-
-    const isExist = await this.userService.findOne({
-      where: { email: userData.email },
-    });
-
-    if (!isExist) {
-      const queryRunner = await startTransaction(this.dataSource);
-      try {
-        const newUserData: Partial<User> = {
-          fullName: userData.fullName,
-          email: userData.email,
-          authProvider: ENUM_AUTH_PROVIDERS.FACEBOOK,
-          password: Crypto.randomBytes(20).toString('hex'),
-          isVerified: true,
-        };
-        const createdUser = await queryRunner.manager.save(Object.assign(new User(), newUserData));
-
-        if (!createdUser) {
-          throw new BadRequestException('Cannot create user');
-        }
-
-        await commitTransaction(queryRunner);
-      } catch (error) {
-        // console.log('🚀 ~ AuthService ~ error:', error);
-        await rollbackTransaction(queryRunner);
-        throw error;
-      }
-    }
-
-    const newCreatedUser = await this.userService.findOne({
-      where: { email: userData.email },
-    });
-
-    if (!newCreatedUser) {
-      throw new BadRequestException('User not created');
-    }
-
-    const callBackUrl = `${additionalData.webRedirectUrl}?token=${userData?.accessToken}&provider=${additionalData.provider}`;
-
-    return {
-      callBackUrl,
-    };
-  }
-
-  async validate(
-    payload: SocialAuthValidateDTO & { userType: ENUM_USER_TYPES },
-  ): Promise<SuccessResponse<IValidateResponse>> {
-    if (payload.provider === ENUM_AUTH_PROVIDERS.GOOGLE)
-      return this.validateUsingGoogleAuth(payload);
-    if (payload.provider === ENUM_AUTH_PROVIDERS.FACEBOOK)
-      return this.validateUsingFacebookAuth(payload);
-    return this.validateUsingSystemAuth(payload);
-  }
-
-  async validateUsingFacebookAuth(
-    payload: SocialAuthValidateDTO & { userType: ENUM_USER_TYPES },
-  ): Promise<SuccessResponse<IValidateResponse>> {
-    const queryRunner = await startTransaction(this.dataSource);
-
-    try {
-      if (!payload.userType) {
-        throw new BadRequestException('User type is required');
-      }
-
-      const fields = 'id,first_name,last_name,name,email,picture.width(480).height(480)';
-      const facebookUrl = `https://graph.facebook.com/v24.0/me?fields=${fields}&access_token=${payload.token}`;
-
-      const facebookResponse = this.http.get(facebookUrl);
-      const responseData = (await firstValueFrom(facebookResponse))?.data;
-      if (!responseData?.email) {
-        throw new BadRequestException(
-          'Email is required, but your facebook account does not have it',
-        );
-      }
-
-      let isNewUser = false;
-      let user = await queryRunner.manager.findOne(User, {
-        where: { email: responseData.email },
-        withDeleted: true,
-      });
-
-      if (user && user.deletedAt) {
-        throw new BadRequestException('User is deleted. Please contact support');
-      }
-
-      if (!user) {
-        const payloadForNewUser: User = {
-          userType: payload.userType,
-          firstName: responseData.first_name,
-          lastName: responseData.last_name,
-          fullName: responseData.name,
-          email: responseData?.email,
-          avatar: responseData?.picture?.data?.url ?? null,
-          authProvider: ENUM_AUTH_PROVIDERS.FACEBOOK,
-          authProviderMetaInfo: {
-            id: responseData.id,
-            email: responseData?.email,
-            name: responseData?.name,
-            provider: ENUM_AUTH_PROVIDERS.FACEBOOK,
-            authenticator: {
-              id: '',
-              title: '',
-            },
-          },
-          isVerified: true,
-        };
-
-        // Create User
-        const createdUser = await queryRunner.manager.save(User, payloadForNewUser);
-
-        await commitTransaction(queryRunner);
-
-        user = createdUser; // Update user to the newly created one
-        isNewUser = true; // Mark as new user
-      }
-
-      const loginResponseData = await this.loginResponse(user.id, {
-        message: isNewUser ? 'Registered and logged in successfully' : 'Logged in successfully',
-        remember: payload.remember,
-        rememberDays: payload.rememberDays,
-      });
-      return new SuccessResponse<IValidateResponse>('Validated successfully', {
-        authSession: loginResponseData.data,
-        isNewUser,
-      });
-    } catch (error) {
-      await rollbackTransaction(queryRunner);
-      console.error('🚀 ~ AuthService ~ validateUsingFacebookAuth ~ error:', error);
-      throw error;
-    }
-  }
-
-  async validateUsingGoogleAuth(
-    payload: SocialAuthValidateDTO & { userType: ENUM_USER_TYPES },
-  ): Promise<SuccessResponse<IValidateResponse>> {
-    const queryRunner = await startTransaction(this.dataSource);
-
-    try {
-      if (!payload.userType) {
-        throw new BadRequestException('User type is required');
-      }
-
-      const googleUrl = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${payload.token}`;
-      const googleResponse = this.http.get(googleUrl);
-      const responseData = (await firstValueFrom(googleResponse))?.data;
-      if (!responseData?.email) {
-        throw new BadRequestException(
-          'Email is required, but your google response does not have it',
-        );
-      }
-
-      let isNewUser = false;
-      let user = await queryRunner.manager.findOne(User, {
-        where: { email: responseData.email },
-        withDeleted: true,
-      });
-
-      if (user && user.deletedAt) {
-        throw new BadRequestException('User is deleted. Please contact support');
-      }
-
-      if (!user) {
-        const payloadForNewUser: User = {
-          userType: payload.userType,
-          firstName: responseData.given_name,
-          lastName: responseData.family_name,
-          fullName: responseData.name,
-          email: responseData?.email,
-          avatar: responseData?.picture?.replace('s96-c', 's500-c'),
-          authProvider: ENUM_AUTH_PROVIDERS.GOOGLE,
-          authProviderMetaInfo: {
-            id: responseData.id,
-            email: responseData?.email,
-            name: responseData?.name,
-            provider: ENUM_AUTH_PROVIDERS.GOOGLE,
-            authenticator: {
-              id: '',
-              title: '',
-            },
-          },
-          isVerified: true,
-        };
-
-        const createdUser = await queryRunner.manager.save(User, payloadForNewUser);
-
-        await commitTransaction(queryRunner);
-
-        user = createdUser; // Update user to the newly created one
-        isNewUser = true; // Mark as new user
-      }
-
-      const loginResponseData = await this.loginResponse(user.id, {
-        message: isNewUser ? 'Registered and logged in successfully' : 'Logged in successfully',
-        remember: payload.remember,
-        rememberDays: payload.rememberDays,
-      });
-      return new SuccessResponse<IValidateResponse>('Validated successfully', {
-        isNewUser,
-        authSession: loginResponseData.data,
-      });
-    } catch (error) {
-      await rollbackTransaction(queryRunner);
-      console.error('🚀 ~ AuthService ~ validateUsingGoogleAuth ~ error:', error);
-      throw error;
-    }
-  }
-
-  async validateUsingSystemAuth(
-    payload: SocialAuthValidateDTO,
-  ): Promise<SuccessResponse<IValidateResponse>> {
-    const decodedToken = this.jwtHelper.verify(payload.token) as {
-      userId: string;
-    };
-
-    const loginResponseData = await this.loginResponse(decodedToken.userId, {
-      message: 'Logged in successfully',
-      remember: payload.remember,
-      rememberDays: payload.rememberDays,
-    });
-    return new SuccessResponse<IValidateResponse>('Validated successfully', {
-      isNewUser: false,
-      authSession: loginResponseData.data,
-    });
-  }
-
-  async turnOn2fa(authUser: IAuthUser): Promise<SuccessResponse> {
-    const whereConditions = {};
-    const identify = identifyIdentifier(authUser?.email ?? authUser?.phoneNumber);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.findOne({
-      where: { ...whereConditions },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    if (user.isTwoFactorEnabled) {
-      throw new BadRequestException('Two factor auth is already turned on');
-    }
-
-    const secret = authenticator.generateSecret();
-    await this.userService.saveOne({
-      id: user.id,
-      twoFactorSecret: secret,
-      isTwoFactorEnabled: true,
-    });
-    // TODO: Clear secret after 30 seconds
-
-    const otpAuthUrl = authenticator.generateURI({
-      issuer: ENV.authenticator.google.issuer,
-      label: identify.value,
-      secret,
-    });
-
-    const qrCode = await toDataURL(otpAuthUrl);
-
-    return new SuccessResponse('Two factor auth turned on', {
-      qrCode,
-    });
-  }
-
-  async turnOff2fa(authUser: IAuthUser): Promise<SuccessResponse> {
-    const whereConditions: any = {};
-    const identify = identifyIdentifier(authUser.email ?? authUser.phoneNumber);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.findOne({
-      where: { ...whereConditions },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    if (!user.isTwoFactorEnabled) {
-      throw new BadRequestException('Two factor auth is already turned off');
-    }
-
-    await this.userService.saveOne({
-      id: user.id,
-      twoFactorSecret: null,
-      isTwoFactorEnabled: false,
-    });
-
-    return new SuccessResponse('Two factor auth turned off');
-  }
-
-  async authenticate2fa(payload: Authenticate2faDTO): Promise<SuccessResponse<ILginResponse>> {
-    const whereConditions = {};
-    const identify = identifyIdentifier(payload.identifier);
-    whereConditions[identify.key] = identify.value;
-
-    const user = await this.userService.findOne({
-      where: { ...whereConditions },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    const verifiedUser = authenticator.verify({
-      token: payload.code,
-      secret: user.twoFactorSecret,
-    });
-
-    if (!verifiedUser) {
-      throw new UnauthorizedException('Invalid code');
-    }
-
-    return this.loginResponse(user.id, { message: 'Two factor verified' });
   }
 
   async otpSentForVerification(payload: {

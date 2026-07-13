@@ -101,21 +101,4 @@ export const ENV = {
     superAdminEmail: process.env.SUPER_ADMIN_EMAIL,
     superAdminPassword: process.env.SUPER_ADMIN_PASSWORD,
   },
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    secret: process.env.GOOGLE_SECRET,
-    redirectUrl: process.env.GOOGLE_REDIRECT_URL,
-  },
-  facebook: {
-    apiVersion: process.env.FB_API_VERSION,
-    clientId: process.env.FACEBOOK_CLIENT_ID,
-    secret: process.env.FACEBOOK_SECRET,
-    redirectUrl: process.env.FACEBOOK_REDIRECT_URL,
-    configId: process.env.FACEBOOK_CONFIG_ID,
-  },
-  authenticator: {
-    google: {
-      issuer: process.env.GOOGLE_AUTHENTICATOR_ISSUER,
-    },
-  },
 };

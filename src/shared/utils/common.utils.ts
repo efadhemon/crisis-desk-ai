@@ -1,9 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import dayjs from 'dayjs';
 import { diskStorage } from 'multer';
 import * as path from 'path';
-import * as QRCode from 'qrcode';
-import { EXPERIENCE_OPTIONS } from '../constants/common.constants';
 
 export const asyncForEach = async <T = any>(
   array: T[],
@@ -128,50 +125,6 @@ export const pick = (obj: object, keys: string[]): Record<string, any> => {
     return finalObj;
   }, {});
 };
-
-export function getTotalExperienceScore(
-  experiences: { startDate: string; endDate: string | null }[],
-): { label: string; key: string; score: number } {
-  let totalMonths = 0;
-
-  for (const exp of experiences) {
-    const start = dayjs(exp.startDate);
-    const end = exp.endDate ? dayjs(exp.endDate) : dayjs();
-
-    if (start.isValid() && end.isValid() && end.isAfter(start)) {
-      const months = end.diff(start, 'month', true); // fractional months
-      totalMonths += Math.max(months, 0);
-    }
-  }
-
-  const totalYears = totalMonths / 12;
-
-  if (totalYears === 0) return EXPERIENCE_OPTIONS[0];
-  if (totalYears > 0 && totalYears < 1) return EXPERIENCE_OPTIONS[1];
-  if (totalYears >= 1 && totalYears < 3) return EXPERIENCE_OPTIONS[2];
-  if (totalYears >= 3 && totalYears < 5) return EXPERIENCE_OPTIONS[3];
-  if (totalYears >= 5 && totalYears < 8) return EXPERIENCE_OPTIONS[4];
-  return EXPERIENCE_OPTIONS[5];
-}
-
-export function calculateMatchingPercentage(
-  matchedProperties: number,
-  totalProperties: number,
-): number {
-  if (totalProperties === 0) {
-    return 0; // Avoid division by zero
-  }
-  const matchedPercentage = (matchedProperties / totalProperties) * 100;
-  return Math.round(matchedPercentage);
-}
-
-export async function generateQrCode(text: string): Promise<any> {
-  try {
-    return await QRCode.toDataURL(text, { errorCorrectionLevel: 'H' });
-  } catch (err) {
-    console.error('===================>', err);
-  }
-}
 
 /**
  * Converts a string from PascalCase or camelCase to snake_case.

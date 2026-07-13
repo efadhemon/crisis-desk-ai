@@ -1,15 +1,10 @@
-import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './../user/user.module';
 import { AuthController } from './controllers/auth.controller';
-import { FacebookOAuthGuard } from './guards/facebook.guard';
-import { GoogleOAuthGuard } from './guards/google.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { AuthService } from './services/auth.service';
-import { FacebookStrategy } from './strategies/facebook.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 
@@ -19,10 +14,10 @@ const subscribers = [];
 
 const controllers = [AuthController];
 
-const modules = [UserModule, HttpModule];
-const strategies = [LocalStrategy, JwtStrategy, GoogleStrategy, FacebookStrategy];
+const modules = [UserModule];
+const strategies = [LocalStrategy, JwtStrategy];
 
-const guards = [RolesGuard, PermissionsGuard, GoogleOAuthGuard, FacebookOAuthGuard];
+const guards = [RolesGuard, PermissionsGuard];
 
 @Module({
   imports: [TypeOrmModule.forFeature(entities), ...modules],

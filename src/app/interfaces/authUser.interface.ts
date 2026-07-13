@@ -16,8 +16,3 @@ export interface ILginResponse {
   permissionToken: string;
   user: null | IAuthUser;
 }
-
-export interface IValidateResponse {
-  isNewUser: boolean;
-  authSession: ILginResponse;
-}
