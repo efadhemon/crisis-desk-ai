@@ -8,8 +8,7 @@ import { ClsModule } from 'nestjs-cls';
 import { ExceptionFilter } from './filters';
 import { CustomThrottlerGuard } from './guards/throttler-custom.guard';
 import { HelpersModule } from './helpers/helpers.module';
-import { ResponseInterceptor } from './interceptors';
-import { ClsUserInterceptor } from './interceptors/clsUser.interceptor';
+import { ClsUserInterceptor, ResponseInterceptor } from './interceptors';
 import { RequestLoggerMiddleware } from './middlewares/requestLogger.middleware';
 import { CacheModule } from './modules/@cache/cache.module';
 import { EventModule } from './modules/@event/event.module';
@@ -63,10 +62,6 @@ const PIPES = [UniqueValidatorPipe];
       provide: APP_FILTER,
       useClass: ExceptionFilter,
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: GlobalRequestInterceptor,
-    // },
     {
       provide: APP_INTERCEPTOR,
       useClass: ClsUserInterceptor,
