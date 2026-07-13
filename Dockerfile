@@ -11,8 +11,9 @@ WORKDIR /app
 # Copy dependency files first (enables Docker layer caching)
 COPY package.json yarn.lock ./
 
-# Install all dependencies (dev + prod) — needed for building
-RUN yarn install --frozen-lockfile
+# Install all dependencies (dev + prod) — needed for building.
+# HUSKY=0 skips the prepare→husky hook (no .git in the image).
+RUN HUSKY=0 yarn install --frozen-lockfile
 
 # Copy only what's needed for the build
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
@@ -33,7 +34,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Install ONLY production dependencies
-RUN yarn install --frozen-lockfile --production \
+RUN HUSKY=0 yarn install --frozen-lockfile --production \
     && yarn cache clean
 
 # ============================================
