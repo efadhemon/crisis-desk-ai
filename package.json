@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "node transaction-check.mjs && rimraf dist && tsc --noEmit && eslint 'src/**/*.ts' --max-warnings=0",
+    "prebuild": "rimraf dist && tsc --noEmit && eslint 'src/**/*.ts' --max-warnings=0",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

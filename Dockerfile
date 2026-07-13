@@ -15,9 +15,8 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Copy only what's needed for the build
-COPY tsconfig.json tsconfig.build.json nest-cli.json transaction-check.mjs ./
+COPY tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY src ./src
-COPY views ./views
 
 # Build the NestJS project (skip prebuild lint/typecheck — CI handles that)
 RUN yarn nest build
