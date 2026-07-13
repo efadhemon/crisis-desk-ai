@@ -1,6 +1,8 @@
 import tsEsLintPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import eslintPluginPrettier from 'eslint-plugin-prettier';
+import unusedImports from 'eslint-plugin-unused-imports';
 import tsEslint from 'typescript-eslint';
 import entityValidatorRules from './eslint-local-rules/entity-validator.js';
 
@@ -32,6 +34,8 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tsEsLintPlugin,
+      prettier: eslintPluginPrettier,
+      'unused-imports': unusedImports,
     },
     rules: {
       ...baseRules,
@@ -44,8 +48,27 @@ export default [
       // Example: let x = 1; function() { let x = 2; } ❌
       'no-shadow': 'error',
 
-      // ✅ Disable regular unused-vars rule (TS handles this better)
+      // ✅ Disable regular unused-vars rule (TS / unused-imports handle this better)
       'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+
+      // ❌ Remove unused imports; flag unused vars (ignores _prefix)
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+
+      // ❌ Prettier formatting enforced via ESLint
+      'prettier/prettier': 'error',
 
       // ❌ Duplicate class members disallowed
       // Example: class A { method() {} method() {} } ❌
@@ -150,20 +173,6 @@ export default [
 
       // ✅ Enforce camelCase with some flexibility
       camelcase: ['error', { properties: 'never' }],
-
-      // ✅ Strong unused vars rule (ignores _prefix)
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          args: 'all',
-          argsIgnorePattern: '^_',
-          caughtErrors: 'all',
-          caughtErrorsIgnorePattern: '^_',
-          destructuredArrayIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          ignoreRestSiblings: true,
-        },
-      ],
     },
   },
   {

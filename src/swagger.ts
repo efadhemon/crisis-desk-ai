@@ -156,12 +156,12 @@ export function setupSwagger(app: INestApplication): void {
   // Setup documentation endpoints
   SwaggerModule.setup(baseDocPath, app, document, {
     ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Complete Documentation',
+    customSiteTitle: 'CrisisDesk API - Complete Documentation',
   });
 
   SwaggerModule.setup(`${baseDocPath}/app`, app, appDoc, {
     ...swaggerUIConfig,
-    customSiteTitle: 'WageHat API - Mobile App',
+    customSiteTitle: 'CrisisDesk API - Mobile App',
   });
 
   // Log available documentation URLs

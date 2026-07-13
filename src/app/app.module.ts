@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from '@src/database/database.module';
 import { ENV } from '@src/env';
@@ -11,7 +10,6 @@ import { HelpersModule } from './helpers/helpers.module';
 import { ClsUserInterceptor, ResponseInterceptor } from './interceptors';
 import { RequestLoggerMiddleware } from './middlewares/requestLogger.middleware';
 import { CacheModule } from './modules/@cache/cache.module';
-import { EventModule } from './modules/@event/event.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/guards/local-auth.guard';
 import { ReportModule } from './modules/report/report.module';
@@ -25,7 +23,6 @@ const MODULES = [
     global: true,
     middleware: { mount: true },
   }),
-  ScheduleModule.forRoot(),
   ThrottlerModule.forRoot({
     throttlers: [
       {
@@ -40,7 +37,6 @@ const MODULES = [
   AuthModule,
   UserModule,
   CacheModule,
-  EventModule,
   ReportModule,
 ];
 const PIPES = [UniqueValidatorPipe];
@@ -75,12 +71,5 @@ const PIPES = [UniqueValidatorPipe];
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(RequestLoggerMiddleware).forRoutes('*'); // apply globally or specify routes
-    // consumer
-    //   .apply(ApiKeyMiddleware)
-    //   .exclude({
-    //     path: '/app/auth/delete-account-data',
-    //     method: RequestMethod.ALL,
-    //   })
-    //   .forRoutes('*'); // apply globally or specify routes
   }
 }

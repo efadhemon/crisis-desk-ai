@@ -36,37 +36,12 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production \
     && yarn cache clean
 
-# Remove build tools after native compilation is done
-# (they're not needed at runtime)
-
-
 # ============================================
 # Stage 3: Final minimal runtime image
 # ============================================
 FROM node:22-alpine AS runtime
 
-# Install only runtime system dependencies
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxrandr \
-    libxtst \
-    libxshmfence \
-    alsa-lib \
-    cups-libs \
-    udev \
-    libstdc++ \
-    bash
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+RUN apk add --no-cache bash
 
 WORKDIR /app
 

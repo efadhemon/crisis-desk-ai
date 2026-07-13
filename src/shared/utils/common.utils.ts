@@ -1,6 +1,4 @@
 import { BadRequestException } from '@nestjs/common';
-import { diskStorage } from 'multer';
-import * as path from 'path';
 
 export const asyncForEach = async <T = any>(
   array: T[],
@@ -76,17 +74,6 @@ export function isArrayHasSameObject<T>(arr: T[], propertyKey: keyof T): boolean
 
   return true;
 }
-
-export const generateFilename = (file): string => {
-  return `${Date.now()}${path.extname(file.originalname)}`;
-};
-
-export const storageFileOptions = diskStorage({
-  destination: './uploads/temp',
-  filename: (_req, file, callback) => {
-    callback(null, generateFilename(file));
-  },
-});
 
 export const getMatchedLogic = (logics: any[], providedCombination: number[]): [] => {
   let matchedLogic = null;
